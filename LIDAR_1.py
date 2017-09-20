@@ -30,14 +30,14 @@ def display_cloud(lines,ax):
     #ax.add_line(radius_line)
 
     # Add circle at y=0
-    p = Circle((0,50),50)
-    ax.add_patch(p)
-    art3d.pathpatch_2d_to_3d(p,z=0,zdir='y')
+    # p = Circle((0,50),50)
+    # ax.add_patch(p)
+    # art3d.pathpatch_2d_to_3d(p,z=0,zdir='y')
 
-    #Add circle at y=1500
-    q = Circle((0,50),50)
-    ax.add_patch(q)
-    art3d.pathpatch_2d_to_3d(q,z=1500,zdir='y')
+    # Add circle at y=1500
+    # q = Circle((0,50),50)
+    # ax.add_patch(q)
+    # art3d.pathpatch_2d_to_3d(q,z=1500,zdir='y')
 
     #Generate wireframe
     a = 360/lines
@@ -46,8 +46,9 @@ def display_cloud(lines,ax):
     for i in range(lines):
         x = 50 * math.cos(accumulating_rad)
         z = 50 * math.sin(accumulating_rad) + 50
-        new_line = art3d.Line3D((x,x),(0,1500),(z,z),ls='--')
-        ax.add_line(new_line)
+        #new_line = art3d.Line3D((x,x),(0,1500),(z,z),ls='--')
+        #ax.add_line(new_line)
+        ax.plot((x,x),(0,1500),(z,z),c='g')
         accumulating_rad += rad
 
 # Main method.
@@ -56,18 +57,23 @@ def main():
     ax = fig.add_subplot(111, projection='3d')
     
     #Set graph limits
-    ax.set_xlim(-200,200)
-    ax.set_ylim(-10,1510)
-    ax.set_zlim(-100,200)
+    # ax.set_xlim(-200,200)
+    # ax.set_ylim(-10,1510)
+    # ax.set_zlim(-100,200)
 
     ax.set_xlabel('x axis')
     ax.set_ylabel('y axis')
     ax.set_zlabel('z axis')
 
     display_cloud(16,ax)
+    ax.relim()
+    # update ax.viewLim using the new dataLim
+    ax.autoscale_view()
+
     if (is_in_cloud(250,750,50)):
         print("It's in the cloud")
     else:
         print("It isn't in the cloud")
+    ax.get_proj = lambda: np.dot(Axes3D.get_proj(ax), np.diag([1/15, 1, 1/15, 1]))
     plt.show()
 main()
