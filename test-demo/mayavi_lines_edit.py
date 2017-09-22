@@ -14,18 +14,18 @@ def display_cloud(divisions,a=0,b=0,c=0):
         line=mlab.plot3d([x+a,x+a],[0+b,1500+b],[z+c,z+c],tube_radius=0.5,color=(1,1,1))
 
 # The method creates the mesh of the cloud.
-def create_mesh():
+def create_mesh(radius=50):
     deg = np.mgrid[0:360:((16+1)*1j)];
     rad = np.radians(deg)
     yy = (0,1500)
     y,r = np.meshgrid(yy,rad)
-    x = np.sin(r)
-    z = np.cos(r)
+    x = radius*np.sin(r)
+    z = radius*np.cos(r)
     print(r)
     print(x)
     print(y)
     print(z)
-    mlab.mesh(x,y,z)
+    mlab.mesh(x,y,z, color=(1,1,1), opacity=0.2)
 
 #    deg=np.mgrid[0:360:16j]
 #    rad=list(map(math.radians,deg))
@@ -53,4 +53,5 @@ def main():
     #mlab.axes(radius_line,extent=radius_extent,ranges=radius_extent,xlabel="x axis",ylabel="y axis",zlabel="z axis")
     #mlab.show()
     create_mesh()
+    mlab.show()
 main()
