@@ -62,7 +62,7 @@ def lidar_line(azimuth,elevation,position):
     t = 0*bin_dist;
     for i in range(len(bin_dist)):
         t[i] = is_in_cloud((x[i],y[i],z[i]))
-    mlab.plot3d(x,y,z,t,tube_radius=1)
+    mlab.plot3d(x,y,z,t,tube_radius=1,colormap='Greys')
 
 # This method creates the mesh of the cloud.
 def create_mesh(radius=50):
