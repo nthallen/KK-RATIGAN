@@ -54,19 +54,18 @@ def lidar_line(azimuth,elevation,position):
     elevation_matrix=[[1,0,0],[0,cel,sel],[0,-sel,cel]]
     dot=np.matmul(elevation_matrix,azimuth_matrix)
     x2,y2,z2=np.matmul([0,1,0],dot)
-    print(x2, y2, z2)
     bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
     x = x1 + bin_dist*x2
     y = y1 + bin_dist*y2
     z = z1 + bin_dist*z2
-    t = 0*bin_dist;
+    t = 0*bin_dist
     for i in range(len(bin_dist)):
         t[i] = is_in_cloud((x[i],y[i],z[i]))
     mlab.plot3d(x,y,z,t,tube_radius=1,colormap='Greys')
 
 # This method creates the mesh of the cloud.
 def create_mesh(radius=50):
-    deg=np.mgrid[0:360:((16+1)*1j)];
+    deg=np.mgrid[0:360:((16+1)*1j)]
     rad=np.radians(deg)
     yy=(0,1500)
     y,r=np.meshgrid(yy,rad)
@@ -74,10 +73,17 @@ def create_mesh(radius=50):
     z=radius*np.cos(r)
     mlab.mesh(x,y,z,color=(1,1,1),opacity=0.5)
 
+# This method creates a simple test of the lidar_line method.
+def test_lidar_lines():
+    for i in range(5):
+        for j in range (20):
+            lidar_line(-112+(9*i),-10+j,(400,750,0))
+
 # Main method.
 def main():
     fig=mlab.figure(bgcolor=(0.52,0.8,1))
     #create_mesh()
-    lidar_line(-90,0,(400,400,0))
+    for i in range(100):
+        lidar_line(-90,10-(i/5),(400,1500-(3*i),-50+i))
     mlab.show()
 main()
