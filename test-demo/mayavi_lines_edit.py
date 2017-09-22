@@ -11,10 +11,10 @@ def is_in_cloud(position):
     distance = math.sqrt((x-0)**2 + (z-0)**2)
     if distance <= 50:
         if (0 <= y <= 1500):
-            return True
+            return 1
         else:
-            return False
-    return False
+            return 0
+    return 0
 
 # This method displays cloud lines with adjustments to account for wind movement.
 def display_cloud(divisions,a=0,b=0,c=0):
@@ -44,14 +44,25 @@ def pan():
 # This method draws a line where the LIDAR instrument is pointing.
 def lidar_line(azimuth,elevation,position):
     x1,y1,z1=position
-    azimuth_matrix=[[math.cos(azimuth),-math.sin(azimuth),0],[math.sin(azimuth),math.cos(azimuth),0],[0,0,1]]
-    elevation_matrix=[[1,0,0],[0,math.cos(elevation),math.sin(elevation)],[0,-math.sin(elevation),math.cos(elevation)]]
+    az = math.radians(azimuth)
+    el = math.radians(elevation)
+    caz = math.cos(az)
+    saz = math.sin(az)
+    cel = math.cos(el)
+    sel = math.sin(el)
+    azimuth_matrix=[[caz,-saz,0],[saz,caz,0],[0,0,1]]
+    elevation_matrix=[[1,0,0],[0,cel,sel],[0,-sel,cel]]
     dot=np.matmul(elevation_matrix,azimuth_matrix)
-    x2,y2,z2=np.matmul(position,dot)
-    
-    bin_dist=np.mgrid[100:15000:(RESOLUTION*1j)]
-    
-    mlab.plot3d([x1,x2],[y1,y2],[z1,z2],tube_radius=1,color=(1,0,0))
+    x2,y2,z2=np.matmul([0,1,0],dot)
+    print(x2, y2, z2)
+    bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
+    x = x1 + bin_dist*x2
+    y = y1 + bin_dist*y2
+    z = z1 + bin_dist*z2
+    t = 0*bin_dist;
+    for i in range(len(bin_dist)):
+        t[i] = is_in_cloud((x[i],y[i],z[i]))
+    mlab.plot3d(x,y,z,t,tube_radius=1)
 
 # This method creates the mesh of the cloud.
 def create_mesh(radius=50):
@@ -66,7 +77,7 @@ def create_mesh(radius=50):
 # Main method.
 def main():
     fig=mlab.figure(bgcolor=(0.52,0.8,1))
-    create_mesh()
-    lidar_line(180,45,(400,400,-400))
+    #create_mesh()
+    lidar_line(-90,0,(400,400,0))
     mlab.show()
 main()
