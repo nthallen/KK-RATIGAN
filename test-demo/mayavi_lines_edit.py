@@ -83,7 +83,13 @@ def test_lidar_lines():
 def main():
     fig=mlab.figure(bgcolor=(0.52,0.8,1))
     #create_mesh()
-    for i in range(100):
-        lidar_line(-90,10-(i/5),(400,1500-(3*i),-50+i))
+    position = [400,1500,-50]
+    direction = np.array([0,-3, 1])*3/math.sqrt(10)
+    for i in range(5):
+        for j in range (20):
+            lidar_line(36-112-(9*i),-10+j,position)
+            position = position + direction
+    #for i in range(100):
+    #    lidar_line(-90,15-(i/3),(400,1500-(3*i),-50+i))
     mlab.show()
 main()
