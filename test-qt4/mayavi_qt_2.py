@@ -1,3 +1,6 @@
+# FLIGHT SCHEDULED FOR MAY 2018
+# 5m, 15m, 30m, 2.4m bin size, higher collection rate than 1Hz
+
 # First, and before importing any Enthought packages, set the ETS_TOOLKIT
 # environment variable to qt4, to tell Traits that we will use Qt.
 import os
@@ -27,29 +30,56 @@ RESOLUTION=100
 # A class to hold information regarding the Gondola.
 class Gondola():
     current_position=(300,750,0)
+    current_position_np=[300,750,0]
     gondola_azimuth=0
     gondola_elevation=90
     gondola_speed=3
+    reference_direction=[0,1,0]
     
     lidar_azimuth=0
     lidar_elevation=90
     
-    def __init__(self, position):
-        pass
+    def __init__(self,position):
+        self.set_position(position)
+    
+    def move_gondola(self):
+        x,y,z=self.get_position()
+        print(x,y,z)
+        mlab.points3d([x],[y],[z],reset_zoom=False)
+        el_ma=elevation_matrix(self.gondola_elevation)
+        az_ma=azimuth_matrix(self.gondola_azimuth)
+        dot=np.matmul(el_ma,az_ma)
+        x2,y2,z2=np.matmul(self.reference_direction,dot)
+        self.set_position((x2,y2,z2))
+        #lidar_line(self.gondola_azimuth,self.gondola_elevation,self.get_position)
+    
+    def get_position(self):
+        return self.current_position
+    
+    def set_position(self,position):
+        x,y,z=position
+        self.current_position=(x,y,z)
+        self.current_position_np=[x,y,z]
+        #mlab.view(azimuth=self.gondola_azimuth,elevation=self.gondola_elevation,focalpoint=self.current_position)
     
     def get_azimuth(self):
         return self.gondola_azimuth
     
     def set_azimuth(self, azimuth):
-        self.gondola_azimuth = azimuth
+        self.gondola_azimuth=azimuth
     
     def get_speed(self):
         return self.gondola_speed
 
     def set_speed(self, speed):
-        self.gondola_speed = speed
+        self.gondola_speed=speed
 
-# Slider with thrust from 0m/s to 3m/s
+    def pan(self,direction):
+        azimuth=self.get_azimuth()
+        if (direction==-1):
+            self.set_azimuth(azimuth+5)
+        if (direction==1):
+            self.set_azimuth(azimuth-5)
 
 # This method determines whether the given point is inside the cloud or not.
 def is_in_cloud(position):
@@ -62,18 +92,34 @@ def is_in_cloud(position):
             return 0
     return 0
 
+# This method returns a matrix based on angle.
+def azimuth_matrix(angle):
+    azimuth=math.radians(angle)
+    caz=math.cos(azimuth)
+    saz=math.sin(azimuth)
+    return [[caz,-saz,0],[saz,caz,0],[0,0,1]]
+
+# This method returns a matrix based on angle.
+def elevation_matrix(angle):
+    elevation=math.radians(angle)
+    cel=math.cos(elevation)
+    sel=math.sin(elevation)
+    return [[1,0,0],[0,cel,sel],[0,-sel,cel]]
+
 # This method draws a line where the LIDAR instrument is pointing.
 def lidar_line(azimuth,elevation,position):
     x1,y1,z1=position
-    az = math.radians(azimuth)
-    el = math.radians(elevation)
-    caz = math.cos(az)
-    saz = math.sin(az)
-    cel = math.cos(el)
-    sel = math.sin(el)
-    azimuth_matrix=[[caz,-saz,0],[saz,caz,0],[0,0,1]]
-    elevation_matrix=[[1,0,0],[0,cel,sel],[0,-sel,cel]]
-    dot=np.matmul(elevation_matrix,azimuth_matrix)
+    #az = math.radians(azimuth)
+    #el = math.radians(elevation)
+    #caz = math.cos(az)
+    #saz = math.sin(az)
+    #cel = math.cos(el)
+    #sel = math.sin(el)
+    #azimuth_matrix=[[caz,-saz,0],[saz,caz,0],[0,0,1]]
+    #elevation_matrix=[[1,0,0],[0,cel,sel],[0,-sel,cel]]
+    az_ma=azimuth_matrix(azimuth)
+    el_ma=elevation_matrix(elevation)
+    dot=np.matmul(el_ma,az_ma)
     x2,y2,z2=np.matmul([0,1,0],dot)
     bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
     x = x1 + bin_dist*x2
@@ -85,17 +131,11 @@ def lidar_line(azimuth,elevation,position):
     mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
 
 # This method automatically moves the gondola 3 meters forward upon timeout.
-def default_movement():
+def default_movement(gondola):
     #azimuth,elevation,distance,focalpoint=mlab.view()
     #lidar_line(azimuth,elevation,focalpoint)
-    mlab.move(forward=Gondola.get_speed(Gondola))
-
-# This method pans the camera by 5 degrees.
-def pan(direction):
-    if (direction==-1):
-        mlab.yaw(5)
-    if (direction==1):
-        mlab.yaw(-5)
+    #mlab.move(forward=Gondola.get_speed(Gondola))
+    gondola.move_gondola()
 
 # This method sets the camera's initial view.
 def setup_view():
@@ -132,7 +172,6 @@ class Visualization(HasTraits):
                 resizable=True # We need this to resize with the parent widget
                 )
 
-
 ################################################################################
 # The QWidget containing the visualization, this is pure PyQt4 code.
 class MayaviQWidget(QtGui.QWidget):
@@ -157,35 +196,41 @@ class MayaviQWidget(QtGui.QWidget):
 class DirectionButton(QtGui.QPushButton):
     label = "none"
     direction=0
-    def __init__(self, string="Button",direction=0):
-        QtGui.QPushButton.__init__(self, string)
-        self.label = string
+    gondola=None
+    
+    def __init__(self,string,direction,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
         self.direction=direction
+        self.gondola=gondola
         
     def connect_released(self):
         self.released.connect(self.handle_released)
         
     def handle_released(self):
         #print(self.label, "Released", self.direction)
-        pan(self.direction)
+        gondola.pan(self.direction)
 
 # A class for the slider that changes the speed of the gondola
 class SpeedSlider(QtGui.QSlider):
     value=3
-    def __init__(self):
+    gondola=None
+    def __init__(self,gondola):
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         QtGui.QSlider.setMinimum(self,0)
         QtGui.QSlider.setMaximum(self,3)
         QtGui.QSlider.setValue(self,3)
+        self.gondola=gondola
 
     def connect_value_changed(self):
         self.valueChanged.connect(self.value_changed)
         
     def value_changed(self,value):
         self.value=value
-        Gondola.set_speed(Gondola,value)
+        gondola.set_speed(value)
 
 if __name__ == "__main__":
+    gondola = Gondola((200,750,0))
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -208,11 +253,11 @@ if __name__ == "__main__":
     layout_2 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
-    speed_slider = SpeedSlider()
+    speed_slider = SpeedSlider(gondola)
     speed_slider.connect_value_changed()
-
-    button_l = DirectionButton("Left",-1)
-    button_r = DirectionButton("Right",1)
+    
+    button_l = DirectionButton("Left",-1,gondola)
+    button_r = DirectionButton("Right",1,gondola)
     button_l.connect_released()
     button_r.connect_released()
     
@@ -221,7 +266,7 @@ if __name__ == "__main__":
     setup_view()
     
     timer=QtCore.QTimer()    
-    timer.timeout.connect(default_movement)
+    timer.timeout.connect(gondola.move_gondola)
     timer.start(1000)
     
     layout.addLayout(layout_2,1,0)
