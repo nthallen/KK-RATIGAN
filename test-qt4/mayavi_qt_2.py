@@ -18,6 +18,7 @@ from pyface.qt import QtGui, QtCore
 #   sip.setapi('QString', 2)
 import numpy as np
 import math
+import time
 
 from mayavi import mlab
 from traits.api import HasTraits, Instance, on_trait_change
@@ -42,26 +43,39 @@ class Gondola():
     def __init__(self,position):
         self.set_position(position)
     
-    def move_gondola(self):
-        x,y,z=self.get_position()
-        mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
+    # This function moves the gondola, indicating its current position with a
+    # red star, and previous positions with white stars.
+    def move_gondola(self,delay=0):
+        x1,y1,z1=self.get_position()
+        mlab.points3d([x1],[y1],[z1],reset_zoom=False,color=(1,1,1))
         el_ma=elevation_matrix(self.get_elevation())
         az_ma=azimuth_matrix(self.get_azimuth())
         dot=np.matmul(el_ma,az_ma)
         x2,y2,z2=self.get_speed()*np.matmul(self.reference_direction,dot)
-        self.set_position((x2+x,y2+y,z2+z))
+        # Assigning new, final positions.
+        x=x1+x2
+        y=y1+y2
+        z=z1+z2
+        time.sleep(delay)
+        self.set_position((x,y,z))
+        # Drawing the new point and the line from the LIDAR.
+        mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
         lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
     
     def get_position(self):
         return self.current_position
     
     def set_position(self,position):
+        view=mlab.view()
+        mlab_distance=50
+        if view!=None:
+            mlab_distance=view[2]
         x1,y1,z1=position
         x2,y2,z2=self.get_position()
         self.current_position=(x1,y1,z1)
         self.current_position_np=[x1,y1,z1]
         if not(x1==x2 and y1==y2 and z1==z2):
-            mlab.view(distance=50,focalpoint=self.get_position())
+            mlab.view(distance=mlab_distance,focalpoint=self.get_position())
     
     def get_elevation(self):
         return self.gondola_elevation
@@ -78,7 +92,8 @@ class Gondola():
     def set_speed(self, speed):
         self.gondola_speed=speed
 
-    def pan(self,direction):
+    def pan(self,direction,delay=0):
+        time.sleep(delay)
         azimuth=self.get_azimuth()
         if (direction==-1):
             self.set_azimuth(azimuth-5)
@@ -111,7 +126,7 @@ def elevation_matrix(angle):
     return [[1,0,0],[0,cel,sel],[0,-sel,cel]]
 
 # This method draws a line where the LIDAR instrument is pointing.
-def lidar_line(azimuth,elevation,position):
+def lidar_line(azimuth,elevation,position,delay=0):
     x1,y1,z1=position
     az_ma=azimuth_matrix(azimuth)
     el_ma=elevation_matrix(elevation)
@@ -124,6 +139,7 @@ def lidar_line(azimuth,elevation,position):
     t = 0*bin_dist
     for i in range(len(bin_dist)):
         t[i] = is_in_cloud((x[i],y[i],z[i]))
+    time.sleep(delay)
     mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
 
 # This method automatically moves the gondola 3 meters forward upon timeout.
@@ -135,7 +151,7 @@ def default_movement(gondola):
 
 # This method sets the camera's initial view.
 def setup_view():
-    mlab.view(azimuth=0,elevation=90,distance=50,focalpoint=(300,750,0))
+    mlab.view(azimuth=0,elevation=90,distance=50,focalpoint=(750,750,0))
 
 # This method creates the mesh of the cloud.
 def create_mesh(radius=50):
@@ -194,9 +210,11 @@ class DirectionButton(QtGui.QPushButton):
     label = "none"
     direction=0
     gondola=None
+    wait=0
     
-    def __init__(self,string,direction,gondola):
+    def __init__(self,string,direction,gondola,delay=0):
         QtGui.QPushButton.__init__(self,string)
+        self.wait=delay
         self.label=string
         self.direction=direction
         self.gondola=gondola
@@ -205,29 +223,33 @@ class DirectionButton(QtGui.QPushButton):
         self.released.connect(self.handle_released)
         
     def handle_released(self):
-        #print(self.label, "Released", self.direction)
+        time.sleep(self.wait)
         gondola.pan(self.direction)
 
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
     value=3
     gondola=None
-    def __init__(self,gondola):
+    wait=0
+    def __init__(self,gondola,delay=0):
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         QtGui.QSlider.setMinimum(self,0)
         QtGui.QSlider.setMaximum(self,3)
         QtGui.QSlider.setValue(self,3)
         self.gondola=gondola
+        self.wait=delay
 
     def connect_value_changed(self):
         self.valueChanged.connect(self.value_changed)
         
     def value_changed(self,value):
+        time.sleep(self.wait)
         self.value=value
         gondola.set_speed(value)
 
 if __name__ == "__main__":
-    gondola = Gondola((200,750,0))
+    setup_view()
+    gondola = Gondola((750,750,0))
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -260,9 +282,8 @@ if __name__ == "__main__":
     
     layout_2.addWidget(button_l,0,0)
     layout_2.addWidget(button_r,0,1)
-    setup_view()
     
-    timer=QtCore.QTimer()    
+    timer=QtCore.QTimer()
     timer.timeout.connect(gondola.move_gondola)
     timer.start(1000)
     
