@@ -32,26 +32,25 @@ class Gondola():
     current_position=(300,750,0)
     current_position_np=[300,750,0]
     gondola_azimuth=0
-    gondola_elevation=90
+    gondola_elevation=0
     gondola_speed=3
     reference_direction=[0,1,0]
     
     lidar_azimuth=0
-    lidar_elevation=90
+    lidar_elevation=0
     
     def __init__(self,position):
         self.set_position(position)
     
     def move_gondola(self):
         x,y,z=self.get_position()
-        print(x,y,z)
-        mlab.points3d([x],[y],[z],reset_zoom=False)
-        el_ma=elevation_matrix(self.gondola_elevation)
-        az_ma=azimuth_matrix(self.gondola_azimuth)
+        mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
+        el_ma=elevation_matrix(self.get_elevation())
+        az_ma=azimuth_matrix(self.get_azimuth())
         dot=np.matmul(el_ma,az_ma)
-        x2,y2,z2=np.matmul(self.reference_direction,dot)
-        self.set_position((x2,y2,z2))
-        #lidar_line(self.gondola_azimuth,self.gondola_elevation,self.get_position)
+        x2,y2,z2=self.get_speed()*np.matmul(self.reference_direction,dot)
+        self.set_position((x2+x,y2+y,z2+z))
+        lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
     
     def get_position(self):
         return self.current_position
@@ -60,7 +59,10 @@ class Gondola():
         x,y,z=position
         self.current_position=(x,y,z)
         self.current_position_np=[x,y,z]
-        #mlab.view(azimuth=self.gondola_azimuth,elevation=self.gondola_elevation,focalpoint=self.current_position)
+        mlab.view(distance=50,focalpoint=self.get_position())
+    
+    def get_elevation(self):
+        return self.gondola_elevation
     
     def get_azimuth(self):
         return self.gondola_azimuth
@@ -77,9 +79,9 @@ class Gondola():
     def pan(self,direction):
         azimuth=self.get_azimuth()
         if (direction==-1):
-            self.set_azimuth(azimuth+5)
-        if (direction==1):
             self.set_azimuth(azimuth-5)
+        if (direction==1):
+            self.set_azimuth(azimuth+5)
 
 # This method determines whether the given point is inside the cloud or not.
 def is_in_cloud(position):
