@@ -56,10 +56,12 @@ class Gondola():
         return self.current_position
     
     def set_position(self,position):
-        x,y,z=position
-        self.current_position=(x,y,z)
-        self.current_position_np=[x,y,z]
-        mlab.view(distance=50,focalpoint=self.get_position())
+        x1,y1,z1=position
+        x2,y2,z2=self.get_position()
+        self.current_position=(x1,y1,z1)
+        self.current_position_np=[x1,y1,z1]
+        if not(x1==x2 and y1==y2 and z1==z2):
+            mlab.view(distance=50,focalpoint=self.get_position())
     
     def get_elevation(self):
         return self.gondola_elevation
@@ -111,14 +113,6 @@ def elevation_matrix(angle):
 # This method draws a line where the LIDAR instrument is pointing.
 def lidar_line(azimuth,elevation,position):
     x1,y1,z1=position
-    #az = math.radians(azimuth)
-    #el = math.radians(elevation)
-    #caz = math.cos(az)
-    #saz = math.sin(az)
-    #cel = math.cos(el)
-    #sel = math.sin(el)
-    #azimuth_matrix=[[caz,-saz,0],[saz,caz,0],[0,0,1]]
-    #elevation_matrix=[[1,0,0],[0,cel,sel],[0,-sel,cel]]
     az_ma=azimuth_matrix(azimuth)
     el_ma=elevation_matrix(elevation)
     dot=np.matmul(el_ma,az_ma)
@@ -195,6 +189,7 @@ class MayaviQWidget(QtGui.QWidget):
         layout.addWidget(self.ui)
         self.ui.setParent(self)
 
+# A class for the gondola's directional buttons.
 class DirectionButton(QtGui.QPushButton):
     label = "none"
     direction=0
@@ -213,7 +208,7 @@ class DirectionButton(QtGui.QPushButton):
         #print(self.label, "Released", self.direction)
         gondola.pan(self.direction)
 
-# A class for the slider that changes the speed of the gondola
+# A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
     value=3
     gondola=None
