@@ -171,7 +171,7 @@ class Gondola():
 # This method determines whether the given point is inside the cloud or not.
 def is_in_cloud(position):
     x,y,z=position
-    distance = math.sqrt((x-0)**2 + (z-0)**2)
+    distance = math.sqrt(x**2 + z**2)
     if distance <= 50:
         if (0 <= y <= 1500):
             return 1
