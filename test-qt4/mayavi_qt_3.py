@@ -68,16 +68,26 @@ class Gondola():
     gondola_speed=3
     reference_direction=[0,1,0]
     view_distance=50
+    iteration=0
     
     lidar_azimuth=0
     lidar_elevation=0
     
-    def __init__(self,position,wait=0):
+    def __init__(self,position,wait):
+        print("Is this method even being called?",wait)
+        self.iteration=wait
         self.set_position(position)
-        self.state_queue=queue.Queue(maxsize=wait)
-        state=Gondola_State(self.get_position,self.get_azimuth,self.get_elevation,self.get_speed)
-        self.state_queue.put(state)
+        self.state_queue=queue.Queue(maxsize=(wait+1))
+        self.initial_stacking(wait)
     
+    # Maybe this will work ...
+    def initial_stacking(self,delay):
+        for i in range(delay):
+            self.move_gondola()
+            state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
+            print(" >>",state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+            self.state_queue.put(state)
+
     # Hold gondola states in queue, only update when the timer expires?
     # With each popping of state off the queue, we update the camera, draw the lines and the points
     
@@ -91,13 +101,16 @@ class Gondola():
     
     # This method is the basic function that mandates all other changes in the gondola class.
     def default(self):
+        print("STATE",self.iteration,":: ", end='')
         view=mlab.view()
         if view!=None:
             self.view_distance=view[2]
-        state=Gondola_State(self.get_position,self.get_azimuth,self.get_elevation,self.get_speed)
+        state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
         self.state_queue.put(state)
+        print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
         self.move_gondola()
         self.advance_in_queue()
+        self.iteration+=1
     
     # This function moves the gondola, indicating its current position with a
     # red star, and previous positions with white stars.
@@ -140,12 +153,14 @@ class Gondola():
     
     def set_azimuth(self, azimuth):
         self.gondola_azimuth=azimuth
+        print("AZIMUTH CHANGED")
     
     def get_speed(self):
         return self.gondola_speed
 
     def set_speed(self, speed):
         self.gondola_speed=speed
+        print("SPEED CHANGE")
 
     def pan(self,direction):
         azimuth=self.get_azimuth()
@@ -289,7 +304,7 @@ class SpeedSlider(QtGui.QSlider):
 
 if __name__ == "__main__":
     setup_view()
-    gondola = Gondola((750,750,0))
+    gondola = Gondola((750,750,0),wait=3)
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
