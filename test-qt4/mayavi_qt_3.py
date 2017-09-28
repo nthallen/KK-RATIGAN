@@ -74,7 +74,6 @@ class Gondola():
     lidar_elevation=0
     
     def __init__(self,position,wait):
-        print("Is this method even being called?",wait)
         self.iteration=wait
         self.set_position(position)
         self.state_queue=queue.Queue(maxsize=(wait+1))
@@ -85,7 +84,7 @@ class Gondola():
         for i in range(delay):
             self.move_gondola()
             state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
-            print(" >>",state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+            #print(" >>",state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
             self.state_queue.put(state)
 
     # Hold gondola states in queue, only update when the timer expires?
@@ -101,13 +100,13 @@ class Gondola():
     
     # This method is the basic function that mandates all other changes in the gondola class.
     def default(self):
-        print("STATE",self.iteration,":: ", end='')
+        #print("STATE",self.iteration,":: ", end='')
         view=mlab.view()
         if view!=None:
             self.view_distance=view[2]
         state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
         self.state_queue.put(state)
-        print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+        #print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
         self.move_gondola()
         self.advance_in_queue()
         self.iteration+=1
@@ -153,14 +152,14 @@ class Gondola():
     
     def set_azimuth(self, azimuth):
         self.gondola_azimuth=azimuth
-        print("AZIMUTH CHANGED")
+        #print("AZIMUTH CHANGED")
     
     def get_speed(self):
         return self.gondola_speed
 
     def set_speed(self, speed):
         self.gondola_speed=speed
-        print("SPEED CHANGE")
+        #print("SPEED CHANGE")
 
     def pan(self,direction):
         azimuth=self.get_azimuth()
