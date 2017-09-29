@@ -69,6 +69,7 @@ class Gondola():
     reference_direction=[0,1,0]
     view_distance=50
     iteration=0
+    paused=False
     
     lidar_azimuth=0
     lidar_elevation=0
@@ -76,8 +77,12 @@ class Gondola():
     def __init__(self,position,wait):
         self.iteration=wait
         self.set_position(position)
-        self.state_queue=queue.Queue(maxsize=(wait+1))
-        self.initial_stacking(wait)
+        if (wait>0):
+            self.state_queue=queue.Queue(maxsize=(wait+1))
+            self.initial_stacking(wait)
+        else:
+            self.state_queue=queue.Queue()
+        self.paused=False
     
     # Maybe this will work ...
     def initial_stacking(self,delay):
@@ -100,16 +105,18 @@ class Gondola():
     
     # This method is the basic function that mandates all other changes in the gondola class.
     def default(self):
-        #print("STATE",self.iteration,":: ", end='')
-        view=mlab.view()
-        if view!=None:
-            self.view_distance=view[2]
-        state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
-        self.state_queue.put(state)
-        #print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
-        self.move_gondola()
-        self.advance_in_queue()
-        self.iteration+=1
+        # Ehhhhh?
+        if not self.paused:
+            print("STATE",self.iteration,":: ", end='')
+            self.move_gondola()
+            view=mlab.view()
+            if view!=None:
+                self.view_distance=view[2]
+            state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
+            self.state_queue.put(state)
+            print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+            self.advance_in_queue()
+            self.iteration+=1
     
     # This function moves the gondola, indicating its current position with a
     # red star, and previous positions with white stars.
@@ -265,6 +272,32 @@ class MayaviQWidget(QtGui.QWidget):
         layout.addWidget(self.ui)
         self.ui.setParent(self)
 
+# A class for the gondola's pause button.
+class PauseButton(QtGui.QPushButton):
+    label="none"
+    paused=False
+    gondola=None
+    
+    def __init__(self,string,gonola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.paused=False
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+
+    def handle_released(self):
+        self.pause_or_unpause()
+
+    def pause_or_unpause(self):
+        if self.paused:
+            self.paused=False
+            gondola.paused=False
+        else:
+            self.paused=True
+            gondola.paused=True
+
 # A class for the gondola's directional buttons.
 class DirectionButton(QtGui.QPushButton):
     label = "none"
@@ -341,8 +374,14 @@ if __name__ == "__main__":
     timer.timeout.connect(gondola.default)
     timer.start(1000)
     
+    pause_button=PauseButton("Pause/Play",gondola)
+    pause_button.connect_released()
+    
     layout.addLayout(layout_2,1,0)
     layout.addWidget(speed_slider,2,0)
+    layout.addWidget(pause_button,3,0)
+    
+    
     container.show()
     window = QtGui.QMainWindow()
     window.setCentralWidget(container)
