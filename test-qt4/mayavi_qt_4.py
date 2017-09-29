@@ -103,7 +103,7 @@ class Gondola():
     def advance_in_queue(self):
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
-        self.lidar.lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
+        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
         self.lidar.draw_figures()
         #mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,1,1))
         #self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
@@ -213,7 +213,7 @@ class IndexableQueue(queue.Queue):
             return self.queue[index]
 
 # A class to hold information regarding the position of the gondola and its representative dots.
-class SphereState():
+class Sphere_State():
     x=None
     y=None
     z=None
@@ -222,9 +222,12 @@ class SphereState():
         self.x=x
         self.y=y
         self.z=z
+    
+    def copy(self):
+        return copy.deepcopy(self)
 
 # A class to hold information regarding the vital information with which to draw lidar lines.
-class LidarState():
+class Lidar_State():
     x=None
     y=None
     z=None
@@ -255,9 +258,10 @@ class Lidar():
         create_mesh()
         for i in range(self.lidar_state_queue.qsize()):
             current_line=self.lidar_state_queue[i]
-            current_sphere=self.sphere_state_queue[i]
+            #current_sphere=self.sphere_state_queue[i]
             mlab.plot3d(current_line.x,current_line.y,current_line.z,current_line.t,tube_radius=1,reset_zoom=False,colormap='Greys')
-            mlab.points3d([current_sphere.x],[current_sphere.y],[current_sphere.z],reset_zoom=False,color=(1,1,1))
+            # Don't understand why this next line absolutely breaks the simulation ... ?
+            #mlab.points3d([current_sphere.x],[current_sphere.y],[current_sphere.z],reset_zoom=False,color=(1,1,1))
         if (self.lidar_state_queue.qsize()==self.max_size):
             self.lidar_state_queue.get()
             self.sphere_state_queue.get()
@@ -276,8 +280,8 @@ class Lidar():
         t = 0*bin_dist
         for i in range(len(bin_dist)):
             t[i] = is_in_cloud((x[i],y[i],z[i]))
-        current_lidar_state=LidarState(x,y,z,t)
-        current_sphere_state=SphereState(x,y,z)
+        current_lidar_state=Lidar_State(x,y,z,t)
+        current_sphere_state=Sphere_State(x,y,z)
         self.lidar_state_queue.put(current_lidar_state)
         self.sphere_state_queue.put(current_sphere_state)
 
