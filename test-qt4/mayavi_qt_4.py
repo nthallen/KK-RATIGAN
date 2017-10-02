@@ -20,6 +20,7 @@ import numpy as np
 import math
 import queue
 import copy
+import vtk
 
 from mayavi import mlab
 from traits.api import HasTraits, Instance, on_trait_change
@@ -104,7 +105,7 @@ class Gondola():
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
         self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
-        self.lidar.draw_figures()
+        #self.lidar.draw_figures()
         #mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,1,1))
         #self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
@@ -113,7 +114,7 @@ class Gondola():
     def default(self):
         # Ehhhhh?
         if not self.paused:
-            print("STATE",self.iteration,":: ", end='')
+            print(" >>STATE",self.iteration,":: ", end='')
             self.move_gondola()
             view=mlab.view()
             if view!=None:
@@ -249,7 +250,7 @@ class Lidar():
     max_size=None
 
     def __init__(self):
-        self.max_size=10
+        self.max_size=100
         self.lidar_state_queue=IndexableQueue(maxsize=self.max_size)
         self.sphere_state_queue=IndexableQueue(maxsize=self.max_size)
 
@@ -259,7 +260,6 @@ class Lidar():
         for i in range(self.lidar_state_queue.qsize()):
             current_line=self.lidar_state_queue[i]
             #current_sphere=self.sphere_state_queue[i]
-            mlab.plot3d(current_line.x,current_line.y,current_line.z,current_line.t,tube_radius=1,reset_zoom=False,colormap='Greys')
             # Don't understand why this next line absolutely breaks the simulation ... ?
             #mlab.points3d([current_sphere.x],[current_sphere.y],[current_sphere.z],reset_zoom=False,color=(1,1,1))
         if (self.lidar_state_queue.qsize()==self.max_size):
@@ -280,10 +280,22 @@ class Lidar():
         t = 0*bin_dist
         for i in range(len(bin_dist)):
             t[i] = is_in_cloud((x[i],y[i],z[i]))
-        current_lidar_state=Lidar_State(x,y,z,t)
-        current_sphere_state=Sphere_State(x,y,z)
-        self.lidar_state_queue.put(current_lidar_state)
-        self.sphere_state_queue.put(current_sphere_state)
+
+        # NEW CODE AS OF 2 OCTOBER 2017
+        if (self.lidar_state_queue.qsize()<self.max_size):
+            new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
+            new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
+            ms_line=new_line.mlab_source
+            ms_sphere=new_sphere.mlab_source
+            self.lidar_state_queue.put(ms_line)
+            self.sphere_state_queue.put(ms_sphere)
+        else:
+            old_line=self.lidar_state_queue.get()
+            old_sphere=self.sphere_state_queue.get()
+            old_line.set(x=x,y=y,z=z,t=t,tube_radius=1,reset_zoom=False,colormap='Greys')
+            old_sphere.set(x=x1,y=y1,z=z1,reset_zoom=False,color=(1,1,1))
+            self.lidar_state_queue.put(old_line)
+            self.sphere_state_queue.put(old_sphere)
 
 # This method sets the camera's initial view.
 def setup_view():
@@ -404,6 +416,7 @@ class SpeedSlider(QtGui.QSlider):
         gondola.set_speed(value)
 
 if __name__ == "__main__":
+    vtk.vtkObject.GlobalWarningDisplayOff()
     setup_view()
     gondola = Gondola((750,750,0),wait=0)
     # Don't create a new QApplication, it would unhook the Events
