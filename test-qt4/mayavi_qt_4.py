@@ -94,20 +94,13 @@ class Gondola():
         for i in range(delay):
             self.move_gondola()
             state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
-            #print(" >>",state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
             self.state_queue.put(state)
-
-    # Hold gondola states in queue, only update when the timer expires?
-    # With each popping of state off the queue, we update the camera, draw the lines and the points
     
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
         self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
-        #self.lidar.draw_figures()
-        #mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,1,1))
-        #self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
     
     # This method is the basic function that mandates all other changes in the gondola class.
@@ -124,9 +117,7 @@ class Gondola():
             print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
             self.advance_in_queue()
             self.iteration+=1
-    
-    # This function moves the gondola, indicating its current position with a
-    # red star, and previous positions with white stars.
+
     def move_gondola(self):
         x1,y1,z1=self.get_position()
         el_ma=elevation_matrix(self.get_elevation())
@@ -138,25 +129,15 @@ class Gondola():
         y=y1+y2
         z=z1+z2
         self.set_position((x,y,z))
-        # Drawing the old and new points and the line from the LIDAR.
-        #mlab.points3d([x1],[y1],[z1],reset_zoom=False,color=(1,1,1))
-        #mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
-        #lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
     
     def get_position(self):
         return self.current_position
     
     def set_position(self,position):
-        #view=mlab.view()
-        #mlab_distance=50
-        #if view!=None:
-            #mlab_distance=view[2]
         x1,y1,z1=position
         x2,y2,z2=self.get_position()
         self.current_position=(x1,y1,z1)
         self.current_position_np=[x1,y1,z1]
-        #if not(x1==x2 and y1==y2 and z1==z2):
-            #mlab.view(distance=mlab_distance,focalpoint=self.get_position())
     
     def get_elevation(self):
         return self.gondola_elevation
@@ -250,21 +231,9 @@ class Lidar():
     max_size=None
 
     def __init__(self):
-        self.max_size=100
+        self.max_size=50
         self.lidar_state_queue=IndexableQueue(maxsize=self.max_size)
         self.sphere_state_queue=IndexableQueue(maxsize=self.max_size)
-
-    def draw_figures(self):
-        mlab.clf()
-        create_mesh()
-        for i in range(self.lidar_state_queue.qsize()):
-            current_line=self.lidar_state_queue[i]
-            #current_sphere=self.sphere_state_queue[i]
-            # Don't understand why this next line absolutely breaks the simulation ... ?
-            #mlab.points3d([current_sphere.x],[current_sphere.y],[current_sphere.z],reset_zoom=False,color=(1,1,1))
-        if (self.lidar_state_queue.qsize()==self.max_size):
-            self.lidar_state_queue.get()
-            self.sphere_state_queue.get()
 
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position):
