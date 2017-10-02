@@ -75,6 +75,9 @@ class Gondola():
     paused=False
     lidar=None
     
+    az1_label=None
+    az2_label=None
+    
     lidar_azimuth=0
     lidar_elevation=0
     
@@ -102,6 +105,12 @@ class Gondola():
         x,y,z=current_state.get_position()
         self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
+        
+        # Update the labels in the GUI
+        string_1="Last Commanded Azimuth: ("+str(self.get_azimuth())+")"
+        string_2="Last Recorded Azimuth: ("+str(current_state.get_azimuth())+")"
+        self.az1_label.setText(string_1)
+        self.az2_label.setText(string_2)
     
     # This method is the basic function that mandates all other changes in the gondola class.
     def default(self):
@@ -115,6 +124,7 @@ class Gondola():
             state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
             print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+            
             self.advance_in_queue()
             self.iteration+=1
 
@@ -328,7 +338,7 @@ class PauseButton(QtGui.QPushButton):
     paused=False
     gondola=None
     
-    def __init__(self,string,gonola):
+    def __init__(self,string,gondola):
         QtGui.QPushButton.__init__(self,string)
         self.label=string
         self.paused=False
@@ -387,7 +397,7 @@ class SpeedSlider(QtGui.QSlider):
 if __name__ == "__main__":
     vtk.vtkObject.GlobalWarningDisplayOff()
     setup_view()
-    gondola = Gondola((750,750,0),wait=0)
+    gondola = Gondola((750,750,0),wait=3)
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -408,6 +418,7 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     layout_2 = QtGui.QGridLayout()
+    layout_3 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
     speed_slider = SpeedSlider(gondola)
@@ -428,10 +439,20 @@ if __name__ == "__main__":
     pause_button=PauseButton("Pause/Play",gondola)
     pause_button.connect_released()
     
+    az1_display=QtGui.QLabel()
+    az2_display=QtGui.QLabel()
+    az1_display.setText("0")
+    az2_display.setText("0")
+    
+    layout_3.addWidget(az1_display,0,0)
+    layout_3.addWidget(az2_display,0,1)
+    gondola.az1_label=az1_display
+    gondola.az2_label=az2_display
+    
     layout.addLayout(layout_2,1,0)
     layout.addWidget(speed_slider,2,0)
     layout.addWidget(pause_button,3,0)
-    
+    layout.addLayout(layout_3,4,0)
     
     container.show()
     window = QtGui.QMainWindow()
