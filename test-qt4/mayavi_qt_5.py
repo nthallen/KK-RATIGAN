@@ -74,6 +74,8 @@ class Gondola():
     iteration=0
     paused=False
     lidar=None
+    command_queue=None
+    command_latency=0
     
     az1_label=None
     az2_label=None
@@ -81,7 +83,7 @@ class Gondola():
     lidar_azimuth=0
     lidar_elevation=0
     
-    def __init__(self,position,wait):
+    def __init__(self,position,wait,c_l):
         self.iteration=wait
         self.set_position(position)
         if (wait>0):
@@ -91,6 +93,7 @@ class Gondola():
             self.state_queue=queue.Queue()
         self.paused=False
         self.lidar=Lidar()
+        self.command_latency=c_l
     
     # Maybe this will work ...
     def initial_stacking(self,delay):
@@ -98,6 +101,9 @@ class Gondola():
             self.move_gondola()
             state=Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
+    
+    def return_time(self):
+        return self.iteration
     
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
@@ -117,6 +123,19 @@ class Gondola():
         # Ehhhhh?
         if not self.paused:
             print(" >>STATE",self.iteration,":: ", end='')
+            # eek {
+            if (self.command_latency != 0):
+                if not(self.command_queue.is_empty()):
+                    c=self.command_queue.execute()
+                    if ((self.return_time()-c[1])>=self.command_latency):
+                        c[0]()
+                    else:
+                        self.command_queue.add_left(c)
+            else:
+                while not(self.command_queue.is_empty()):
+                    c=self.command_queue.execute()[0]
+                    c()
+            # eek }
             self.move_gondola()
             view=mlab.view()
             if view!=None:
@@ -374,44 +393,83 @@ class PauseButton(QtGui.QPushButton):
 
 # A class for the gondola's directional buttons.
 class DirectionButton(QtGui.QPushButton):
+    command_queue=None
     label = "none"
     direction=0
     gondola=None
+    start=None
     
-    def __init__(self,string,direction,gondola):
+    def __init__(self,string,direction,gondola,command):
         QtGui.QPushButton.__init__(self,string)
         self.label=string
         self.direction=direction
         self.gondola=gondola
+        self.command_queue=command
         
     def connect_released(self):
         self.released.connect(self.handle_released)
         
     def handle_released(self):
-        gondola.pan(self.direction)
+        self.start=gondola.return_time()
+        command_queue.add(lambda: gondola.pan(self.direction))
 
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
+    command_queue=None
     value=3
     gondola=None
-    def __init__(self,gondola):
+    def __init__(self,gondola,command):
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         QtGui.QSlider.setMinimum(self,0)
         QtGui.QSlider.setMaximum(self,3)
         QtGui.QSlider.setValue(self,3)
         self.gondola=gondola
+        self.command_queue=command
 
     def connect_value_changed(self):
         self.valueChanged.connect(self.value_changed)
         
     def value_changed(self,value):
         self.value=value
-        gondola.set_speed(value)
+        command_queue.add(lambda: gondola.set_speed(value))
 
+# A class to hold the command queue to implement command latency.
+class Command_Queue():
+    delay=None
+    c_queue=None
+    gondola=None
+    
+    def is_empty(self):
+        if (len(self.c_queue)==0):
+            return True
+        else:
+            return False
+    
+    def add_left(self,item):
+        self.c_queue.appendleft(item)
+    
+    def add(self,item):
+        self.c_queue.append((item,self.return_time()))
+    
+    def return_time(self):
+        return gondola.return_time()
+    
+    def __init__(self,gondola,wait=0):
+        self.delay=wait
+        self.gondola=gondola
+        self.c_queue=queue.deque()
+    
+    def execute(self):
+        return self.c_queue.popleft()
+
+# Main method
 if __name__ == "__main__":
+    command_latency=0
     vtk.vtkObject.GlobalWarningDisplayOff()
     setup_view()
-    gondola = Gondola((750,750,0),wait=0)
+    gondola = Gondola((750,750,0),wait=0,c_l=command_latency)
+    command_queue=Command_Queue(gondola)
+    gondola.command_queue=command_queue
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -435,11 +493,11 @@ if __name__ == "__main__":
     layout_3 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
-    speed_slider = SpeedSlider(gondola)
+    speed_slider = SpeedSlider(gondola,command_queue)
     speed_slider.connect_value_changed()
     
-    button_l = DirectionButton("Left",-1,gondola)
-    button_r = DirectionButton("Right",1,gondola)
+    button_l = DirectionButton("Pan Left",-1,gondola,command_queue)
+    button_r = DirectionButton("Pan Right",1,gondola,command_queue)
     button_l.connect_released()
     button_r.connect_released()
     
