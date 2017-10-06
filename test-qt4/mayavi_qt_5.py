@@ -21,6 +21,7 @@ import math
 import queue
 import copy
 import vtk
+import random
 
 from mayavi import mlab
 from traits.api import HasTraits, Instance, on_trait_change
@@ -126,11 +127,13 @@ class Gondola():
             # eek {
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
-                    c=self.command_queue.execute()
-                    if ((self.return_time()-c[1])>=self.command_latency):
-                        c[0]()
-                    else:
-                        self.command_queue.add_left(c)
+                    while not(self.command_queue.is_empty()):
+                        c=self.command_queue.execute()
+                        if ((self.return_time()-c[1])>=self.command_latency):
+                            c[0]()
+                        else:
+                            self.command_queue.add_left(c)
+                            break
             else:
                 while not(self.command_queue.is_empty()):
                     c=self.command_queue.execute()[0]
@@ -438,37 +441,44 @@ class Command_Queue():
     delay=None
     c_queue=None
     gondola=None
-    
+    reliability=None
+
     def is_empty(self):
         if (len(self.c_queue)==0):
             return True
         else:
             return False
-    
+
     def add_left(self,item):
         self.c_queue.appendleft(item)
-    
+
     def add(self,item):
-        self.c_queue.append((item,self.return_time()))
-    
+        chance=random.random()
+        if (chance<self.reliability):
+            self.c_queue.append((item,self.return_time()))
+
     def return_time(self):
         return gondola.return_time()
-    
-    def __init__(self,gondola,wait=0):
+
+    def __init__(self,gondola,wait=0,rel=1):
         self.delay=wait
         self.gondola=gondola
         self.c_queue=queue.deque()
+        self.reliability=rel
     
     def execute(self):
         return self.c_queue.popleft()
 
 # Main method
 if __name__ == "__main__":
+    latency=0
     command_latency=0
+    reliability=1
+    
     vtk.vtkObject.GlobalWarningDisplayOff()
     setup_view()
-    gondola = Gondola((750,750,0),wait=0,c_l=command_latency)
-    command_queue=Command_Queue(gondola)
+    gondola = Gondola((750,750,0),wait=latency,c_l=command_latency)
+    command_queue=Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
