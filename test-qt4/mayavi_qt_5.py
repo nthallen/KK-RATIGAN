@@ -294,10 +294,10 @@ def setup_view():
     mlab.view(azimuth=0,elevation=0,distance=50,focalpoint=(750,750,0))
 
 # This method creates the mesh of the cloud.
-def create_mesh(radius=50):
+def create_mesh(start,end,radius=50):
     deg=np.mgrid[0:360:((16+1)*1j)]
     rad=np.radians(deg)
-    yy=(0,1500)
+    yy=(start,end)
     y,r=np.meshgrid(yy,rad)
     x=radius*np.sin(r)
     z=radius*np.cos(r)
@@ -313,8 +313,9 @@ class Visualization(HasTraits):
         # This function is called when the view is opened. We don't
         # populate the scene when the view is not yet open, as some
         # VTK features require a GLContext.
-
-        create_mesh()
+        
+        for i in range(0,50,2):
+            create_mesh(start=(30*i),end=(30*(i+1)))
         # We can do normal mlab calls on the embedded scene.
         #self.scene.mlab.test_points3d()
         
