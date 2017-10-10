@@ -30,6 +30,7 @@ from mayavi.core.ui.api import MayaviScene, MlabSceneModel, \
         SceneEditor
 
 RESOLUTION=100
+#(0.52,0.8,0.92) # Sky Blue Color
 
 # A class to hold vital information regarding the Gondola.
 class Gondola_State():
@@ -77,6 +78,7 @@ class Gondola():
     lidar=None
     command_queue=None
     command_latency=0
+    lidar_off=False
     
     az1_label=None
     az2_label=None
@@ -95,6 +97,7 @@ class Gondola():
         self.paused=False
         self.lidar=Lidar()
         self.command_latency=c_l
+        self.lidar_off=False
     
     # Maybe this will work ...
     def initial_stacking(self,delay):
@@ -110,7 +113,7 @@ class Gondola():
     def advance_in_queue(self):
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
-        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
+        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position(),self.lidar_off)
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
         
         # Update the labels in the GUI
@@ -123,7 +126,7 @@ class Gondola():
     def default(self):
         # Ehhhhh?
         if not self.paused:
-            print(" >>STATE",self.iteration,":: ", end='')
+            print(" >>STATE",self.iteration,":: ",end='')
             # eek {
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
@@ -140,6 +143,10 @@ class Gondola():
                     c()
             # eek }
             self.move_gondola()
+            
+            # This line is just for test purposes
+            self.pan(-1)
+            
             view=mlab.view()
             if view!=None:
                 self.view_distance=view[2]
@@ -189,9 +196,9 @@ class Gondola():
     def pan(self,direction):
         azimuth=self.get_azimuth()
         if (direction==-1):
-            self.set_azimuth(azimuth-5)
+            self.set_azimuth(azimuth-2)
         if (direction==1):
-            self.set_azimuth(azimuth+5)
+            self.set_azimuth(azimuth+2)
 
 # This method determines whether the given point is inside the cloud or not.
 def is_in_cloud(position):
@@ -264,7 +271,7 @@ class Lidar():
     reference_direction=[0,1,0]
 
     def __init__(self):
-        self.max_size=50
+        self.max_size=10
         self.lidar_state_queue=IndexableQueue(maxsize=self.max_size)
         self.sphere_state_queue=IndexableQueue(maxsize=self.max_size)
 
@@ -280,7 +287,7 @@ class Lidar():
         return np.matmul(step_3,self.reference_direction)
 
     # This method draws a line where the LIDAR instrument is pointing.
-    def lidar_line(self,azimuth,elevation,position):
+    def lidar_line(self,azimuth,elevation,position,off):
         x1,y1,z1=position
         az_ma=azimuth_matrix(azimuth)
         el_ma=elevation_matrix(elevation)
@@ -296,24 +303,35 @@ class Lidar():
 
         # NEW CODE 2 OCTOBER 2017
         if (self.lidar_state_queue.qsize()<self.max_size):
-            new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
+            if (off==False):
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
+                ms_line=new_line.mlab_source
+                ms_line.set(opacity=1)
+                self.lidar_state_queue.put(ms_line)
+            else:
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
+                ms_line=new_line.mlab_source
+                ms_line.set(opacity=0)
+                self.lidar_state_queue.put(ms_line)
             new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
-            ms_line=new_line.mlab_source
             ms_sphere=new_sphere.mlab_source
-            self.lidar_state_queue.put(ms_line)
-            #print(ms_line.scalars)
             self.sphere_state_queue.put(ms_sphere)
         else:
-            old_line=self.lidar_state_queue.get()
+            if (off==False):
+                old_line=self.lidar_state_queue.get()
+                old_line.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=1)
+                self.lidar_state_queue.put(old_line)
+            else:
+                old_line=self.lidar_state_queue.get()
+                old_line.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=0)
+                self.lidar_state_queue.put(old_line)
             old_sphere=self.sphere_state_queue.get()
-            old_line.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys')
             old_sphere.set(x=x1,y=y1,z=z1,reset_zoom=False,color=(1,1,1))
-            self.lidar_state_queue.put(old_line)
             self.sphere_state_queue.put(old_sphere)
 
 # This method sets the camera's initial view.
 def setup_view():
-    mlab.view(azimuth=0,elevation=0,distance=50,focalpoint=(750,750,0))
+    mlab.view(azimuth=0,elevation=0,distance=0,focalpoint=(300,750,0))
 
 # This method creates the mesh of the cloud.
 def create_mesh(start,end,radius=50):
@@ -335,6 +353,31 @@ class Visualization(HasTraits):
         # This function is called when the view is opened. We don't
         # populate the scene when the view is not yet open, as some
         # VTK features require a GLContext.
+        
+        #fig=mlab.gcf()
+        #fig=mlab.figure(bgcolor=(0.52,0.8,0.92))
+
+        # render backdrop
+        # turns out if you try to render AN ENTIRE FUCKING PLANET
+        # the cloud and dots don't show up because the resolution is off
+#        u=np.linspace(0,2*np.pi,10)
+#        v=np.linspace(0,np.pi,10)
+#        x=6371000*np.outer(np.cos(u),np.sin(v))
+#        y=6371000*np.outer(np.sin(u),np.sin(v))
+#        z=6371000*np.outer(np.ones(np.size(u)),np.cos(v))-6401000
+#        mlab.mesh(x,y,z,color=(0, 0.5, 0))
+
+        # Create Arrow Vectors
+        a=[-300,0]
+        b=[0,0]
+        c=[0,0]
+        mlab.quiver3d(a,b,c,color=(0.5,0,0),line_width=2.0,reset_zoom=False,scale_factor=1)
+        x=[0,0]
+        y=[0,300]
+        z=[0,0]
+        mlab.quiver3d(x,y,z,color=(0.5,0,0),line_width=2.0,reset_zoom=False,scale_factor=1)
+        #,extent=[0,0,0,300,-300,-300]
+        #,extent=[-300,0,0,0,-300,-300]
         
         for i in range(0,50,2):
             create_mesh(start=(30*i),end=(30*(i+1)))
@@ -365,8 +408,35 @@ class MayaviQWidget(QtGui.QWidget):
 
         # The edit_traits call will generate the widget to embed.
         self.ui = self.visualization.edit_traits(parent=self,kind='subpanel').control
+        
         layout.addWidget(self.ui)
         self.ui.setParent(self)
+
+# A class for the gondola's pause button.
+class OffButton(QtGui.QPushButton):
+    label="none"
+    off=False
+    gondola=None
+    
+    def __init__(self,string,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.off=False
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+
+    def handle_released(self):
+        self.on_or_off()
+
+    def on_or_off(self):
+        if self.off:
+            self.off=False
+            gondola.lidar_off=False
+        else:
+            self.off=True
+            gondola.lidar_off=True
 
 # A class for the gondola's pause button.
 class PauseButton(QtGui.QPushButton):
@@ -471,11 +541,15 @@ class Command_Queue():
 
 # Main method
 if __name__ == "__main__":
+    # The important stuff
     latency=0
     command_latency=0
     reliability=1
-    
+
     vtk.vtkObject.GlobalWarningDisplayOff()
+    #renderer=vtk.vtkRenderer()
+    #renderer.SetBackground
+    
     setup_view()
     gondola = Gondola((750,750,0),wait=latency,c_l=command_latency)
     command_queue=Command_Queue(gondola,rel=reliability)
@@ -520,6 +594,8 @@ if __name__ == "__main__":
     
     pause_button=PauseButton("Pause/Play",gondola)
     pause_button.connect_released()
+    off_button=OffButton("Lidar On/Off",gondola)
+    off_button.connect_released()
     
     az1_display=QtGui.QLabel()
     az2_display=QtGui.QLabel()
@@ -534,7 +610,8 @@ if __name__ == "__main__":
     layout.addLayout(layout_2,1,0)
     layout.addWidget(speed_slider,2,0)
     layout.addWidget(pause_button,3,0)
-    layout.addLayout(layout_3,4,0)
+    layout.addWidget(off_button,4,0)
+    layout.addLayout(layout_3,5,0)
     
     container.show()
     window = QtGui.QMainWindow()
