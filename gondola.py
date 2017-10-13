@@ -43,7 +43,7 @@ class Gondola():
         self.paused=False
         self.lidar=lidar.Lidar(maxsize=max_size)
         self.command_latency=c_l
-        self.lidar_off=False
+        self.lidar.off=False
         self.scan_angle=45
     
     # Maybe this will work ...
@@ -60,7 +60,7 @@ class Gondola():
     def advance_in_queue(self):
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
-        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position(),self.lidar_off)
+        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
         
         # Update the labels in the GUI
@@ -89,9 +89,6 @@ class Gondola():
                     c=self.command_queue.execute()[0]
                     c()
             self.move_gondola()
-            
-            # This line is just for test purposes
-            #self.pan(-1)
             
             view=mlab.view()
             if view!=None:

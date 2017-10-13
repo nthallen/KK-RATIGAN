@@ -182,8 +182,16 @@ if __name__ == "__main__":
     
     pause_button=interactions.PauseButton("Pause/Play",gondola)
     pause_button.connect_released()
-    off_button=interactions.OffButton("Lidar On/Off",gondola)
-    off_button.connect_released()
+    
+    combo_box = QtGui.QComboBox()
+    combo_box.addItem("LIDAR Multi Scan")
+    combo_box.addItem("LIDAR Horizontal Scan")
+    combo_box.addItem("LIDAR Vertical Scan")
+    combo_box.addItem("LIDAR OFF")
+    combo_box.activated[str].connect(gondola.lidar.mode_select)
+    
+    #off_button=interactions.OffButton("Lidar On/Off",gondola)
+    #off_button.connect_released()
     
     az1_display=QtGui.QLabel()
     az2_display=QtGui.QLabel()
@@ -198,7 +206,7 @@ if __name__ == "__main__":
     layout.addLayout(layout_2,1,0)
     layout.addWidget(speed_slider,2,0)
     layout.addWidget(pause_button,3,0)
-    layout.addWidget(off_button,4,0)
+    layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_3,5,0)
     
     container.show()

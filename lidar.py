@@ -33,6 +33,7 @@ class Lidar():
     v_seq=None
     hv_seq=None
     seq=None
+    off=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -43,7 +44,21 @@ class Lidar():
         self.h_seq=bitvector.BitSequenceHorizontal(4)
         self.v_seq=bitvector.BitSequenceVertical(4)
         self.hv_seq=bitvector.BitSequence(4,3)
-        self.seq=self.h_seq
+        self.seq=self.hv_seq
+        self.off=False
+
+    def mode_select(self,mode):
+        if (mode=="LIDAR Multi Scan"):
+            self.off=False
+            self.seq=self.hv_seq
+        if (mode == "LIDAR Horizontal Scan"):
+            self.off=False
+            self.seq=self.h_seq
+        if (mode == "LIDAR Vertical Scan"):
+            self.off=False
+            self.seq=self.v_seq
+        if (mode == "LIDAR OFF"):
+            self.off=True
 
     # This method calculates the direction in which the LIDAR should be facing.
     def lidar_direction(self,azimuth,elevation):
@@ -67,7 +82,7 @@ class Lidar():
         self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.
-    def lidar_line(self,azimuth,elevation,position,off):
+    def lidar_line(self,azimuth,elevation,position):
         x1,y1,z1=position
         x2,y2,z2=self.lidar_direction(azimuth,elevation)
         bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
@@ -78,7 +93,7 @@ class Lidar():
         for i in range(len(bin_dist)):
             t[i] = is_in_cloud((x[i],y[i],z[i]))
         if (self.lidar_state_queue.qsize()<self.max_size):
-            if (off==False):
+            if (self.off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
                 ms_line=new_line
                 self.lidar_state_queue.put(ms_line)
@@ -90,7 +105,7 @@ class Lidar():
             ms_sphere=new_sphere.mlab_source
             self.sphere_state_queue.put(ms_sphere)
         else:
-            if (off==False):
+            if (self.off==False):
                 old_line=self.lidar_state_queue.get()
                 old_line.actor.property.opacity=1
                 old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys')
