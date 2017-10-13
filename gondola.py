@@ -56,6 +56,36 @@ class Gondola():
     def return_time(self):
         return self.iteration
     
+    def mode_select(self,mode):
+        if (mode=="LIDAR Multi Scan"):
+            self.command_queue.add(lambda: self.turn_lidar_on())
+            self.command_queue.add(lambda: self.set_hv_seq())
+        if (mode == "LIDAR Horizontal Scan"):
+            self.command_queue.add(lambda: self.turn_lidar_on())
+            self.command_queue.add(lambda: self.set_h_seq())
+        if (mode == "LIDAR Vertical Scan"):
+            self.command_queue.add(lambda: self.turn_lidar_on())
+            self.command_queue.add(lambda: self.set_v_seq())
+        if (mode == "LIDAR OFF"):
+            self.command_queue.add(lambda: self.turn_lidar_off())
+    
+    def set_h_seq(self):
+        self.lidar.seq=self.lidar.h_seq
+    
+    def set_v_seq(self):
+        self.lidar.seq=self.lidar.v_seq
+    
+    def set_hv_seq(self):
+        self.lidar.seq=self.lidar.hv_seq
+    
+    def turn_lidar_on(self):
+        self.lidar_off=False
+        self.lidar.off=False
+    
+    def turn_lidar_off(self):
+        self.lidar_off=True
+        self.lidar.off=True
+    
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
         current_state=self.state_queue.get()
@@ -73,7 +103,7 @@ class Gondola():
     # This function occurs once every second (on the clock timeout) unless paused.
     def default(self):
         if not self.paused:
-            self.lidar.scan(self.scan_angle)
+            self.lidar.scan()
             print(" >>STATE",self.iteration,":: ",end='')
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
@@ -135,6 +165,9 @@ class Gondola():
 
     def set_speed(self, speed):
         self.gondola_speed=speed
+
+    def set_angle(self, angle):
+        self.lidar.max_angle=angle
 
     def pan(self,direction):
         azimuth=self.get_azimuth()

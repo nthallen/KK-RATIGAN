@@ -104,6 +104,26 @@ class SpeedSlider(QtGui.QSlider):
         self.value=value
         self.command_queue.add(lambda: self.gondola.set_speed(value))
 
+# A class for the slider that changes the speed of the gondola.
+class AngleSlider(QtGui.QSlider):
+    command_queue=None
+    value=45
+    gondola=None
+    def __init__(self,gondola,command):
+        QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
+        QtGui.QSlider.setMinimum(self,0)
+        QtGui.QSlider.setMaximum(self,45)
+        QtGui.QSlider.setValue(self,45)
+        self.gondola=gondola
+        self.command_queue=command
+
+    def connect_value_changed(self):
+        self.valueChanged.connect(self.value_changed)
+        
+    def value_changed(self,value):
+        self.value=value
+        self.command_queue.add(lambda: self.gondola.set_angle(value))
+
 # A class to hold the command queue to implement command latency.
 class Command_Queue():
     delay=None

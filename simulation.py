@@ -132,7 +132,7 @@ if __name__ == "__main__":
     latency=0           # The number of iterations for results to reach ground
     command_latency=0   # The number of iterations for commands to reach the gondola
     reliability=1       # The % chance that a command will follow through
-    maxsize=20          # The maximum size of the graphical objects queues
+    maxsize=10          # The maximum size of the graphical objects queues
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -163,10 +163,13 @@ if __name__ == "__main__":
     mayavi_widget = MayaviQWidget(container)
     layout_2 = QtGui.QGridLayout()
     layout_3 = QtGui.QGridLayout()
+    layout_4 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
     speed_slider = interactions.SpeedSlider(gondola,command_queue)
     speed_slider.connect_value_changed()
+    angle_slider = interactions.AngleSlider(gondola,command_queue)
+    angle_slider.connect_value_changed()
     
     button_l = interactions.DirectionButton("Pan Left",-1,gondola,command_queue)
     button_r = interactions.DirectionButton("Pan Right",1,gondola,command_queue)
@@ -188,7 +191,7 @@ if __name__ == "__main__":
     combo_box.addItem("LIDAR Horizontal Scan")
     combo_box.addItem("LIDAR Vertical Scan")
     combo_box.addItem("LIDAR OFF")
-    combo_box.activated[str].connect(gondola.lidar.mode_select)
+    combo_box.activated[str].connect(gondola.mode_select)
     
     #off_button=interactions.OffButton("Lidar On/Off",gondola)
     #off_button.connect_released()
@@ -200,11 +203,13 @@ if __name__ == "__main__":
     
     layout_3.addWidget(az1_display,0,0)
     layout_3.addWidget(az2_display,0,1)
+    layout_4.addWidget(speed_slider,0,0)
+    layout_4.addWidget(angle_slider,0,1)
     gondola.az1_label=az1_display
     gondola.az2_label=az2_display
     
     layout.addLayout(layout_2,1,0)
-    layout.addWidget(speed_slider,2,0)
+    layout.addLayout(layout_4,2,0)
     layout.addWidget(pause_button,3,0)
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_3,5,0)

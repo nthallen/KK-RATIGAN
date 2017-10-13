@@ -98,9 +98,3 @@ def increment(sequence):
         last-=1
     if (last>=0 and not sequence[last].boolean):
         sequence[last].boolean=True
-
-#def main():
-#    seq=BitSequence(4,3)
-#    for i in range(10):
-#        print(seq.evaluate(10+i,10+i))
-#main()

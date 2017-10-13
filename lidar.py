@@ -34,6 +34,7 @@ class Lidar():
     hv_seq=None
     seq=None
     off=None
+    max_angle=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -46,19 +47,7 @@ class Lidar():
         self.hv_seq=bitvector.BitSequence(4,3)
         self.seq=self.hv_seq
         self.off=False
-
-    def mode_select(self,mode):
-        if (mode=="LIDAR Multi Scan"):
-            self.off=False
-            self.seq=self.hv_seq
-        if (mode == "LIDAR Horizontal Scan"):
-            self.off=False
-            self.seq=self.h_seq
-        if (mode == "LIDAR Vertical Scan"):
-            self.off=False
-            self.seq=self.v_seq
-        if (mode == "LIDAR OFF"):
-            self.off=True
+        self.max_angle=45
 
     # This method calculates the direction in which the LIDAR should be facing.
     def lidar_direction(self,azimuth,elevation):
@@ -72,9 +61,9 @@ class Lidar():
         return np.matmul(self.reference_direction,step_3)
 
     # A method to perform several lidar scans.
-    def scan(self,max_angle):
-        degrees_horizontal=max_angle
-        degrees_vertical=max_angle/2
+    def scan(self):
+        degrees_horizontal=self.max_angle
+        degrees_vertical=self.max_angle/2
         az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
         azimuth=az_el[0]
         elevation=az_el[1]
