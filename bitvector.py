@@ -11,6 +11,34 @@ class BitVector():
         self.vector=points
         self.boolean=False
 
+class BitSequenceHorizontal():
+    sequence=None
+    normalization_vector=None
+    angle_vector=None
+    
+    def evaluate(self,az,el):
+        # Raise azimuth, keep elevation at zero
+        pass
+    
+    def __init__(self,m,n):
+        pass
+
+class BitSequenceVertical():
+    sequence=None
+    normalization_vector=None
+    angle_vector=None
+    max_angle=None
+    
+    def evaluate(self,az,el):
+        # Keep azimuth at zero, raise elevation
+        self.angle_vector=[az,el]
+        loc=[0,0]
+        
+        return loc
+
+    def __init__(self,maxangle):
+        self.max_angle=maxangle
+
 # A class to store a sequence of bit-vectors.
 class BitSequence():
     sequence=None
@@ -27,7 +55,7 @@ class BitSequence():
         loc=tuple(map(operator.truediv,loc,self.normalization_vector))
         loc=tuple(map(operator.mul,loc,self.angle_vector))
         increment(self.sequence)
-        
+        print(loc)
         # Subtract normalization vector from one pass results
         # Divide by normalization vector
         # Multiply by angle vector [az,el]
@@ -67,8 +95,8 @@ def increment(sequence):
     if (last>=0 and not sequence[last].boolean):
         sequence[last].boolean=True
 
-def main():
-    seq=BitSequence(4,3)
-    for i in range(10):
-        print(seq.evaluate(10+i,10+i))
-main()
+#def main():
+#    seq=BitSequence(4,3)
+#    for i in range(10):
+#        print(seq.evaluate(10+i,10+i))
+#main()

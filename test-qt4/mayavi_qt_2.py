@@ -19,6 +19,7 @@ from pyface.qt import QtGui, QtCore
 import numpy as np
 import math
 import queue
+import copy
 
 from mayavi import mlab
 from traits.api import HasTraits, Instance, on_trait_change
@@ -30,8 +31,7 @@ RESOLUTION=100
 
 # A class to hold information regarding the Gondola.
 class Gondola():
-    delay=0
-    event_queue=queue.Queue()
+    state_queue=queue.Queue()
     current_position=(300,750,0)
     current_position_np=[300,750,0]
     gondola_azimuth=0
@@ -44,23 +44,29 @@ class Gondola():
     
     def __init__(self,position,wait=0):
         self.set_position(position)
-        self.delay=wait
+        self.state_queue=queue.Queue(maxsize=wait)
+    
+    # Hold gondola states in queue, only update when the timer expires?
+    # With each popping of state off the queue, we update the camera, draw the lines and the points
     
     # This function should call the next function in the queue.
     def advance_in_queue(self):
-        if (self.event_queue.empty()):
-            self.event_queue.put(self.move_gondola())
-        else:
-            self.event_queue.get(timeout=self.delay)
+        current_state=self.state_queue.get()
+        x,y,z=current_state.get_position()
+        mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,1,1))
+        lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
+        mlab.view(focalpoint=current_state.get_position())
     
     def default(self):
+        self.move_gondola()
+        current_state=copy.deepcopy(self)
+        self.state_queue.put(current_state)
         self.advance_in_queue()
     
     # This function moves the gondola, indicating its current position with a
     # red star, and previous positions with white stars.
     def move_gondola(self):
         x1,y1,z1=self.get_position()
-        mlab.points3d([x1],[y1],[z1],reset_zoom=False,color=(1,1,1))
         el_ma=elevation_matrix(self.get_elevation())
         az_ma=azimuth_matrix(self.get_azimuth())
         dot=np.matmul(el_ma,az_ma)
@@ -70,24 +76,25 @@ class Gondola():
         y=y1+y2
         z=z1+z2
         self.set_position((x,y,z))
-        # Drawing the new point and the line from the LIDAR.
-        mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
-        lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
+        # Drawing the old and new points and the line from the LIDAR.
+        #mlab.points3d([x1],[y1],[z1],reset_zoom=False,color=(1,1,1))
+        #mlab.points3d([x],[y],[z],reset_zoom=False,color=(1,0,0))
+        #lidar_line(self.get_azimuth(),self.get_elevation(),self.get_position())
     
     def get_position(self):
         return self.current_position
     
     def set_position(self,position):
-        view=mlab.view()
-        mlab_distance=50
-        if view!=None:
-            mlab_distance=view[2]
+        #view=mlab.view()
+        #mlab_distance=50
+        #if view!=None:
+            #mlab_distance=view[2]
         x1,y1,z1=position
         x2,y2,z2=self.get_position()
         self.current_position=(x1,y1,z1)
         self.current_position_np=[x1,y1,z1]
-        if not(x1==x2 and y1==y2 and z1==z2):
-            mlab.view(distance=mlab_distance,focalpoint=self.get_position())
+        #if not(x1==x2 and y1==y2 and z1==z2):
+            #mlab.view(distance=mlab_distance,focalpoint=self.get_position())
     
     def get_elevation(self):
         return self.gondola_elevation
@@ -224,7 +231,7 @@ class DirectionButton(QtGui.QPushButton):
         self.released.connect(self.handle_released)
         
     def handle_released(self):
-        gondola.event_queue.put(gondola.pan(self.direction))
+        gondola.pan(self.direction)
 
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
@@ -242,7 +249,7 @@ class SpeedSlider(QtGui.QSlider):
         
     def value_changed(self,value):
         self.value=value
-        gondola.event_queue.put(gondola.set_speed(value))
+        gondola.set_speed(value)
 
 if __name__ == "__main__":
     setup_view()

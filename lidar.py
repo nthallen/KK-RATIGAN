@@ -2,8 +2,9 @@
 
 import interactions
 import simulation
-import numpy as np
+import bitvector
 import math
+import numpy as np
 from mayavi import mlab
 
 RESOLUTION=100
@@ -28,6 +29,7 @@ class Lidar():
     lidar_azimuth=None
     lidar_elevation=None
     reference_direction=[0,1,0]
+    seq=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -35,6 +37,7 @@ class Lidar():
         self.sphere_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
         self.lidar_azimuth=0
         self.lidar_elevation=0
+        self.seq=bitvector.BitSequence(4,3)
 
     # This method calculates the direction in which the LIDAR should be facing.
     def lidar_direction(self,azimuth,elevation,position):
@@ -49,7 +52,13 @@ class Lidar():
 
     # A method to perform several lidar scans.
     def scan(self,max_angle):
-        pass
+        degrees_horizontal=max_angle
+        degrees_vertical=max_angle/2
+        az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
+        azimuth=az_el[0]
+        elevation=az_el[1]
+        self.lidar_azimuth=azimuth
+        self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position,off):
