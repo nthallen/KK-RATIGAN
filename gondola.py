@@ -98,7 +98,7 @@ class Gondola():
                 self.view_distance=view[2]
             state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
-            print(state.get_azimuth(),state.get_elevation(),state.get_position(),state.get_speed())
+            print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,"LE:",self.lidar.lidar_elevation)
             
             self.advance_in_queue()
             self.iteration+=1

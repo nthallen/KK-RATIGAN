@@ -132,7 +132,7 @@ if __name__ == "__main__":
     latency=0           # The number of iterations for results to reach ground
     command_latency=0   # The number of iterations for commands to reach the gondola
     reliability=1       # The % chance that a command will follow through
-    maxsize=128         # The maximum size of the graphical objects queues
+    maxsize=20          # The maximum size of the graphical objects queues
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()

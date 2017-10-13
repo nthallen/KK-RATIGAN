@@ -29,6 +29,9 @@ class Lidar():
     lidar_azimuth=None
     lidar_elevation=None
     reference_direction=[0,1,0]
+    h_seq=None
+    v_seq=None
+    hv_seq=None
     seq=None
 
     def __init__(self,maxsize):
@@ -37,17 +40,20 @@ class Lidar():
         self.sphere_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
         self.lidar_azimuth=0
         self.lidar_elevation=0
-        self.seq=bitvector.BitSequence(4,3)
+        self.h_seq=bitvector.BitSequenceHorizontal(4)
+        self.v_seq=bitvector.BitSequenceVertical(4)
+        self.hv_seq=bitvector.BitSequence(4,3)
+        self.seq=self.h_seq
 
     # This method calculates the direction in which the LIDAR should be facing.
-    def lidar_direction(self,azimuth,elevation,position):
+    def lidar_direction(self,azimuth,elevation):
         gondola_az_ma=simulation.azimuth_matrix(azimuth)
         gondola_el_ma=simulation.elevation_matrix(elevation)
         lidar_az_ma=simulation.azimuth_matrix(self.lidar_azimuth)
         lidar_el_ma=simulation.elevation_matrix(self.lidar_elevation)
         step_1=np.matmul(gondola_el_ma,gondola_az_ma)
         step_2=np.matmul(lidar_el_ma,lidar_az_ma)
-        step_3=np.matmul(step_1,step_2)
+        step_3=np.matmul(step_2,step_1)
         return np.matmul(self.reference_direction,step_3)
 
     # A method to perform several lidar scans.
@@ -63,11 +69,7 @@ class Lidar():
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position,off):
         x1,y1,z1=position
-        #az_ma=azimuth_matrix(azimuth)
-        #el_ma=elevation_matrix(elevation)
-        #dot=np.matmul(el_ma,az_ma)
-        #x2,y2,z2=np.matmul(self.reference_direction,dot)
-        x2,y2,z2=self.lidar_direction(azimuth,elevation,position)
+        x2,y2,z2=self.lidar_direction(azimuth,elevation)
         bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
         x = x1 + bin_dist*x2
         y = y1 + bin_dist*y2
@@ -75,8 +77,6 @@ class Lidar():
         t = 0*bin_dist
         for i in range(len(bin_dist)):
             t[i] = is_in_cloud((x[i],y[i],z[i]))
-
-        # NEW CODE 2 OCTOBER 2017
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')

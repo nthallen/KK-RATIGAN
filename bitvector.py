@@ -12,32 +12,36 @@ class BitVector():
         self.boolean=False
 
 class BitSequenceHorizontal():
-    sequence=None
-    normalization_vector=None
-    angle_vector=None
-    
-    def evaluate(self,az,el):
-        # Raise azimuth, keep elevation at zero
-        pass
-    
-    def __init__(self,m,n):
-        pass
-
-class BitSequenceVertical():
-    sequence=None
-    normalization_vector=None
-    angle_vector=None
-    max_angle=None
+    n_divs=None
+    cur_div=0
     
     def evaluate(self,az,el):
         # Keep azimuth at zero, raise elevation
-        self.angle_vector=[az,el]
-        loc=[0,0]
-        
+        loc=[az*self.cur_div/self.n_divs,0]
+        if (self.cur_div >= self.n_divs):
+            self.cur_div = -self.n_divs
+        else:
+            self.cur_div = self.cur_div+1
         return loc
 
-    def __init__(self,maxangle):
-        self.max_angle=maxangle
+    def __init__(self,n_divs):
+        self.n_divs = n_divs
+
+class BitSequenceVertical():
+    n_divs=None
+    cur_div=0
+    
+    def evaluate(self,az,el):
+        # Keep azimuth at zero, raise elevation
+        loc=[0,el*self.cur_div/self.n_divs]
+        if (self.cur_div >= self.n_divs):
+            self.cur_div = -self.n_divs
+        else:
+            self.cur_div = self.cur_div+1
+        return loc
+
+    def __init__(self,n_divs):
+        self.n_divs = n_divs
 
 # A class to store a sequence of bit-vectors.
 class BitSequence():
@@ -55,7 +59,7 @@ class BitSequence():
         loc=tuple(map(operator.truediv,loc,self.normalization_vector))
         loc=tuple(map(operator.mul,loc,self.angle_vector))
         increment(self.sequence)
-        print(loc)
+        
         # Subtract normalization vector from one pass results
         # Divide by normalization vector
         # Multiply by angle vector [az,el]
