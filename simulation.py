@@ -47,16 +47,6 @@ def elevation_matrix(angle):
 def setup_view():
     mlab.view(azimuth=0,elevation=0,distance=0,focalpoint=(300,750,0))
 
-# This method creates the mesh of the cloud.
-def create_mesh(start,end,radius=50):
-    deg=np.mgrid[0:360:((16+1)*1j)]
-    rad=np.radians(deg)
-    yy=(start,end)
-    y,r=np.meshgrid(yy,rad)
-    x=radius*np.sin(r)
-    z=radius*np.cos(r)
-    mlab.mesh(x,y,z,color=(1,1,1),opacity=0.5)
-
 ################################################################################
 #The actual visualization
 class Visualization(HasTraits):
@@ -92,9 +82,7 @@ class Visualization(HasTraits):
         mlab.quiver3d(x,y,z,color=(0.5,0,0),line_width=2.0,reset_zoom=False,scale_factor=1)
         #,extent=[0,0,0,300,-300,-300]
         #,extent=[-300,0,0,0,-300,-300]
-        
-        for i in range(0,50,2):
-            create_mesh(start=(30*i),end=(30*(i+1)))
+
         # We can do normal mlab calls on the embedded scene.
         #self.scene.mlab.test_points3d()
         
@@ -138,10 +126,6 @@ if __name__ == "__main__":
     #renderer=vtk.vtkRenderer()
     #renderer.SetBackground
 
-    setup_view()
-    gondola = gondola.Gondola((750,750,0),wait=latency,c_l=command_latency,max_size=maxsize)
-    command_queue=interactions.Command_Queue(gondola,rel=reliability)
-    gondola.command_queue=command_queue
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -161,9 +145,16 @@ if __name__ == "__main__":
             # layout.addWidget(label, i, j)
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
+    
+    #setup_view()
+    gondola = gondola.Gondola((750,750,0),wait=latency,c_l=command_latency,max_size=maxsize)
+    command_queue=interactions.Command_Queue(gondola,rel=reliability)
+    gondola.command_queue=command_queue
+    
     layout_2 = QtGui.QGridLayout()
     layout_3 = QtGui.QGridLayout()
     layout_4 = QtGui.QGridLayout()
+    layout_5 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
     speed_slider = interactions.SpeedSlider(gondola,command_queue)
@@ -185,6 +176,8 @@ if __name__ == "__main__":
     
     pause_button=interactions.PauseButton("Pause/Play",gondola)
     pause_button.connect_released()
+    cloud_button=interactions.CloudButton("Cloud On/Off",gondola)
+    cloud_button.connect_released()
     
     combo_box = QtGui.QComboBox()
     combo_box.addItem("LIDAR Multi Scan")
@@ -205,12 +198,14 @@ if __name__ == "__main__":
     layout_3.addWidget(az2_display,0,1)
     layout_4.addWidget(speed_slider,0,0)
     layout_4.addWidget(angle_slider,0,1)
+    layout_5.addWidget(pause_button,0,0)
+    layout_5.addWidget(cloud_button,0,1)
     gondola.az1_label=az1_display
     gondola.az2_label=az2_display
     
     layout.addLayout(layout_2,1,0)
     layout.addLayout(layout_4,2,0)
-    layout.addWidget(pause_button,3,0)
+    layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_3,5,0)
     

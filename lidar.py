@@ -84,12 +84,10 @@ class Lidar():
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
-                ms_line=new_line
-                self.lidar_state_queue.put(ms_line)
+                self.lidar_state_queue.put(new_line)
             else:
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=0)
-                ms_line=new_line
-                self.lidar_state_queue.put(ms_line)
+                self.lidar_state_queue.put(new_line)
             new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
             ms_sphere=new_sphere.mlab_source
             self.sphere_state_queue.put(ms_sphere)

@@ -36,6 +36,32 @@ class OffButton(QtGui.QPushButton):
             self.off=True
             self.gondola.lidar_off=True
 
+# A class for toggling the cloud's visibility
+class CloudButton(QtGui.QPushButton):
+    label="none"
+    visible=None
+    gondola=None
+    
+    def __init__(self,string,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.visible=True
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+
+    def handle_released(self):
+        self.appear_or_disappear()
+
+    def appear_or_disappear(self):
+        if self.visible:
+            self.visible=False
+            self.gondola.turn_cloud_off()
+        else:
+            self.visible=True
+            self.gondola.turn_cloud_on()
+
 # A class for the gondola's pause button.
 class PauseButton(QtGui.QPushButton):
     label="none"

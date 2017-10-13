@@ -9,6 +9,8 @@ from mayavi import mlab
 
 # A class to hold information regarding the Gondola.
 class Gondola():
+    cloud=None
+    cloud_is_visible=None
     state=None
     state_queue=queue.Queue()
     current_position=(300,750,0)
@@ -45,7 +47,25 @@ class Gondola():
         self.command_latency=c_l
         self.lidar.off=False
         self.scan_angle=45
-    
+        self.cloud_is_visible=True
+        self.init_cloud()
+
+    # This method creates the mesh of the cloud.
+    def create_mesh(self,start,end,radius=50):
+        deg=np.mgrid[0:360:((16+1)*1j)]
+        rad=np.radians(deg)
+        yy=(start,end)
+        y,r=np.meshgrid(yy,rad)
+        x=radius*np.sin(r)
+        z=radius*np.cos(r)
+        cloud_disk=mlab.mesh(x,y,z,color=(1,1,1),opacity=0.5)
+        self.cloud.append(cloud_disk)
+
+    def init_cloud(self):
+        self.cloud=[]
+        for i in range(0,50,2):
+            self.create_mesh(start=(30*i),end=(30*(i+1)))
+
     # Maybe this will work ...
     def initial_stacking(self,delay):
         for i in range(delay):
@@ -53,20 +73,21 @@ class Gondola():
             state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
     
+    # Returns time since start of simulation.
     def return_time(self):
         return self.iteration
     
     def mode_select(self,mode):
         if (mode=="LIDAR Multi Scan"):
-            self.command_queue.add(lambda: self.turn_lidar_on())
             self.command_queue.add(lambda: self.set_hv_seq())
-        if (mode == "LIDAR Horizontal Scan"):
             self.command_queue.add(lambda: self.turn_lidar_on())
+        if (mode=="LIDAR Horizontal Scan"):
             self.command_queue.add(lambda: self.set_h_seq())
-        if (mode == "LIDAR Vertical Scan"):
             self.command_queue.add(lambda: self.turn_lidar_on())
+        if (mode=="LIDAR Vertical Scan"):
             self.command_queue.add(lambda: self.set_v_seq())
-        if (mode == "LIDAR OFF"):
+            self.command_queue.add(lambda: self.turn_lidar_on())
+        if (mode=="LIDAR OFF"):
             self.command_queue.add(lambda: self.turn_lidar_off())
     
     def set_h_seq(self):
@@ -85,6 +106,16 @@ class Gondola():
     def turn_lidar_off(self):
         self.lidar_off=True
         self.lidar.off=True
+    
+    def turn_cloud_off(self):
+        for disk in self.cloud:
+            disk.actor.property.opacity=0
+        self.cloud_is_visible=False
+    
+    def turn_cloud_on(self):
+        for disk in self.cloud:
+            disk.actor.property.opacity=1
+        self.cloud_is_visible=True
     
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
