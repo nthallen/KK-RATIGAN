@@ -1,5 +1,6 @@
 # Miles E. Allen, 12 October 2017
 
+import math
 import queue
 import states
 import simulation
@@ -30,6 +31,8 @@ class Gondola():
     
     az1_label=None
     az2_label=None
+    position1_label=None
+    position2_label=None
     
     lidar_azimuth=0
     lidar_elevation=0
@@ -117,6 +120,13 @@ class Gondola():
             disk.actor.property.opacity=1
         self.cloud_is_visible=True
     
+    def trim_positions(self,position):
+        x,y,z=position
+        x=math.floor(x*10)/10
+        y=math.floor(y*10)/10
+        z=math.floor(z*10)/10
+        return (x,y,z)
+    
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
         current_state=self.state_queue.get()
@@ -127,8 +137,12 @@ class Gondola():
         # Update the labels in the GUI
         string_1="Last Commanded Azimuth: ("+str(self.get_azimuth())+")"
         string_2="Last Recorded Azimuth: ("+str(current_state.get_azimuth())+")"
+        string_3="Last Commanded Position: "+str(self.trim_positions(self.get_position()))
+        string_4="Last Recorded Position: "+str(self.trim_positions(current_state.get_position()))
         self.az1_label.setText(string_1)
         self.az2_label.setText(string_2)
+        self.position1_label.setText(string_3)
+        self.position2_label.setText(string_4)
     
     # This method is the basic function that mandates all other changes in the gondola class.
     # This function occurs once every second (on the clock timeout) unless paused.
@@ -203,6 +217,6 @@ class Gondola():
     def pan(self,direction):
         azimuth=self.get_azimuth()
         if (direction==-1):
-            self.set_azimuth(azimuth-2)
+            self.set_azimuth(azimuth-10)
         if (direction==1):
-            self.set_azimuth(azimuth+2)
+            self.set_azimuth(azimuth+10)

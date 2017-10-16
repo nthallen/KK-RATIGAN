@@ -44,7 +44,7 @@ def elevation_matrix(angle):
 
 # This method sets the camera's initial view.
 def setup_view():
-    mlab.view(azimuth=0,elevation=0,distance=0,focalpoint=(300,750,0))
+    mlab.view(azimuth=0,elevation=0,distance=20,focalpoint=(300,750,0))
 
 ################################################################################
 #The actual visualization
@@ -65,12 +65,14 @@ class Visualization(HasTraits):
         # render backdrop
         # turns out if you try to render AN ENTIRE FUCKING PLANET
         # the cloud and dots don't show up because the resolution is off
-#        u=np.linspace(0,2*np.pi,10)
-#        v=np.linspace(0,np.pi,10)
-#        x=6371000*np.outer(np.cos(u),np.sin(v))
-#        y=6371000*np.outer(np.sin(u),np.sin(v))
-#        z=6371000*np.outer(np.ones(np.size(u)),np.cos(v))-6401000
-#        mlab.mesh(x,y,z,color=(0, 0.5, 0))
+        #earth=mlab.points3d(0,0,-6030000,mode='sphere',scale_factor=6000000,color=(0,0.25,0))
+        earth_horizon=mlab.barchart(0,0,-30000,mode='2dcircle',lateral_scale=200,scale_factor=30000,color=(0,0.25,0),reset_zoom=False)
+        mlab.xlabel("origin")
+        #mlab.ylabel("y")
+        #mlab.zlabel("z")
+
+        #s = np.random.random((1000, 1000))
+        #earth=mlab.imshow(s,colormap='gist_earth')
 
         # Create Arrow Vectors
         a=[-300,0]
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     latency=0           # The number of iterations for results to reach ground
     command_latency=0   # The number of iterations for commands to reach the gondola
     reliability=1       # The % chance that a command will follow through
-    maxsize=10          # The maximum size of the graphical objects queues
+    maxsize=20          # The maximum size of the graphical objects queues
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -147,13 +149,12 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    #setup_view()
     gondola = gondola.Gondola((750,750,0),wait=latency,c_l=command_latency,max_size=maxsize)
     command_queue=interactions.Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue
     
     layout_2 = QtGui.QGridLayout()
-    layout_3 = QtGui.QGridLayout()
+    layout_display = QtGui.QGridLayout()
     layout_4 = QtGui.QGridLayout()
     layout_5 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
@@ -186,9 +187,6 @@ if __name__ == "__main__":
     combo_box.addItem("LIDAR Vertical Scan")
     combo_box.addItem("LIDAR OFF")
     combo_box.activated[str].connect(gondola.mode_select)
-    
-    #off_button=interactions.OffButton("Lidar On/Off",gondola)
-    #off_button.connect_released()
     
     layout_speed_slider=QtGui.QGridLayout()
     layout_speed_labels=QtGui.QGridLayout()
@@ -228,28 +226,36 @@ if __name__ == "__main__":
     
     az1_display=QtGui.QLabel()
     az2_display=QtGui.QLabel()
+    position1_display=QtGui.QLabel()
+    position2_display=QtGui.QLabel()
     az1_display.setText("0")
     az2_display.setText("0")
+    position1_display.setText("0")
+    position2_display.setText("0")
     
-    layout_3.addWidget(az1_display,0,0)
-    layout_3.addWidget(az2_display,0,1)
+    layout_display.addWidget(az1_display,0,0)
+    layout_display.addWidget(az2_display,0,1)
+    layout_display.addWidget(position1_display,0,2)
+    layout_display.addWidget(position2_display,0,3)
     layout_4.addLayout(layout_speed_slider,0,0)
     layout_4.addLayout(layout_angle_slider,0,1)
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
     gondola.az1_label=az1_display
     gondola.az2_label=az2_display
+    gondola.position1_label=position1_display
+    gondola.position2_label=position2_display
     
     layout.addLayout(layout_2,1,0)
     layout.addLayout(layout_4,2,0)
     layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
-    layout.addLayout(layout_3,5,0)
+    layout.addLayout(layout_display,5,0)
     
     container.show()
     window = QtGui.QMainWindow()
     window.setCentralWidget(container)
     window.show()
-
+    setup_view()
     # Start the main event loop.
     app.exec_()
