@@ -57,8 +57,10 @@ class Visualization(HasTraits):
         # populate the scene when the view is not yet open, as some
         # VTK features require a GLContext.
         
+        # Nothing works, nothing ever works, what the fuck
         #fig=mlab.gcf()
         #fig=mlab.figure(bgcolor=(0.52,0.8,0.92))
+        #mlab.figure(bgcolor=(0.52,0.8,0.92))
 
         # render backdrop
         # turns out if you try to render AN ENTIRE FUCKING PLANET
@@ -130,7 +132,7 @@ if __name__ == "__main__":
     # '.instance()' method to retrieve the existing one.
     app = QtGui.QApplication.instance()
     container = QtGui.QWidget()
-    container.setWindowTitle("Embedding Mayavi in a PyQt4 Application")
+    container.setWindowTitle("KK-RATIGAN Flight Simulation")
     # define a "complex" layout to test the behaviour
     layout = QtGui.QGridLayout(container)
     # put some stuff around mayavi
