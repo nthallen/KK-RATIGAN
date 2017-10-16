@@ -17,7 +17,6 @@ from pyface.qt import QtGui, QtCore
 # the following lines are executed before the import of PyQT:
 #   import sip
 #   sip.setapi('QString', 2)
-import numpy as np
 import math
 import vtk
 import interactions
@@ -189,6 +188,42 @@ if __name__ == "__main__":
     #off_button=interactions.OffButton("Lidar On/Off",gondola)
     #off_button.connect_released()
     
+    layout_speed_slider=QtGui.QGridLayout()
+    layout_speed_labels=QtGui.QGridLayout()
+    layout_angle_slider=QtGui.QGridLayout()
+    layout_angle_labels=QtGui.QGridLayout()
+    
+    speed_slider_name=QtGui.QLabel()
+    speed_slider_name.setText("Speed")
+    speed_slider_name.setAlignment(QtCore.Qt.AlignCenter)
+    speed_slider_min=QtGui.QLabel()
+    speed_slider_min.setText("0")
+    speed_slider_max=QtGui.QLabel()
+    speed_slider_max.setText("3")
+    speed_slider_max.setAlignment(QtCore.Qt.AlignRight)
+    angle_slider_name=QtGui.QLabel()
+    angle_slider_name.setText("Angle")
+    angle_slider_name.setAlignment(QtCore.Qt.AlignCenter)
+    angle_slider_min=QtGui.QLabel()
+    angle_slider_min.setText("0")
+    angle_slider_max=QtGui.QLabel()
+    angle_slider_max.setText("45")
+    angle_slider_max.setAlignment(QtCore.Qt.AlignRight)
+    
+    layout_speed_labels.addWidget(speed_slider_min,0,0)
+    layout_speed_labels.addWidget(speed_slider_name,0,1)
+    layout_speed_labels.addWidget(speed_slider_max,0,2)
+    
+    layout_angle_labels.addWidget(angle_slider_min,0,0)
+    layout_angle_labels.addWidget(angle_slider_name,0,1)
+    layout_angle_labels.addWidget(angle_slider_max,0,2)
+    
+    layout_speed_slider.addLayout(layout_speed_labels,0,0)
+    layout_speed_slider.addWidget(speed_slider,1,0)
+    
+    layout_angle_slider.addLayout(layout_angle_labels,0,0)
+    layout_angle_slider.addWidget(angle_slider,1,0)
+    
     az1_display=QtGui.QLabel()
     az2_display=QtGui.QLabel()
     az1_display.setText("0")
@@ -196,8 +231,8 @@ if __name__ == "__main__":
     
     layout_3.addWidget(az1_display,0,0)
     layout_3.addWidget(az2_display,0,1)
-    layout_4.addWidget(speed_slider,0,0)
-    layout_4.addWidget(angle_slider,0,1)
+    layout_4.addLayout(layout_speed_slider,0,0)
+    layout_4.addLayout(layout_angle_slider,0,1)
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
     gondola.az1_label=az1_display
