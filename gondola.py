@@ -52,7 +52,7 @@ class Gondola():
         self.scan_angle=45
         self.cloud_is_visible=True
         self.init_cloud()
-#        self.init_planet()
+        self.init_planet()
 
     # This method creates the mesh of the cloud.
     def create_mesh(self,start,end,radius=50):
@@ -181,7 +181,12 @@ class Gondola():
 #            print("view_distance:", self.view_distance)
             state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
-            print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,"LE:",self.lidar.lidar_elevation)
+            print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,
+                  "LE: {0:.2f}".format(self.lidar.lidar_elevation),
+                  "View Az: {0:.2f}".format(view[0]),
+                  "El: {0:.2f}".format(view[1]),
+                  "dist: {0:.2f}".format(self.view_distance),
+                  "focus:", view[3])
             
             self.advance_in_queue()
             self.iteration+=1

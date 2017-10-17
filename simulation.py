@@ -44,7 +44,7 @@ def elevation_matrix(angle):
 
 # This method sets the camera's initial view.
 def setup_view():
-    mlab.view(azimuth=0,elevation=0,distance=20,focalpoint=(300,750,0))
+    mlab.view(azimuth=-90,elevation=80,distance=20,focalpoint=(300,750,0))
 
 ################################################################################
 #The actual visualization
