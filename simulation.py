@@ -66,7 +66,7 @@ class Visualization(HasTraits):
         # turns out if you try to render AN ENTIRE FUCKING PLANET
         # the cloud and dots don't show up because the resolution is off
         #earth=mlab.points3d(0,0,-6030000,mode='sphere',scale_factor=6000000,color=(0,0.25,0))
-        #earth_horizon=mlab.barchart(0,0,-30000,mode='2dcircle',lateral_scale=200,scale_factor=30000,color=(0,0.25,0),reset_zoom=False)
+        #earth_horizon = mlab.barchart(0,0,-30000,mode='2dcircle', lateral_scale=200,scale_factor=30000, color=(0,0.25,0),reset_zoom=False)
         mlab.xlabel("origin")
         #mlab.ylabel("y")
         #mlab.zlabel("z")
@@ -120,10 +120,10 @@ class MayaviQWidget(QtGui.QWidget):
 # Main method
 if __name__ == "__main__":
     # The important stuff
-    latency=0           # The number of iterations for results to reach ground
-    command_latency=0   # The number of iterations for commands to reach the gondola
-    reliability=1       # The % chance that a command will follow through
-    maxsize=20          # The maximum size of the graphical objects queues
+    latency=0           # The number of iterations for gondola results to reach ground
+    command_latency=0   # The number of iterations for ground commands to reach the gondola
+    reliability=1       # The probability that a command will follow through to the gondola
+    maxsize=20          # The maximum size of the graphical objects queues, both positional spheres and LIDAR lines
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # '.instance()' method to retrieve the existing one.
     app = QtGui.QApplication.instance()
     container = QtGui.QWidget()
-    container.setWindowTitle("KK-RATIGAN Flight Simulation")
+    container.setWindowTitle("Gondola Flight Simulation")
     # define a "complex" layout to test the behaviour
     layout = QtGui.QGridLayout(container)
     # put some stuff around mayavi
