@@ -52,6 +52,7 @@ class Gondola():
         self.scan_angle=45
         self.cloud_is_visible=True
         self.init_cloud()
+#        self.init_planet()
 
     # This method creates the mesh of the cloud.
     def create_mesh(self,start,end,radius=50):
@@ -68,6 +69,15 @@ class Gondola():
         self.cloud=[]
         for i in range(0,50,2):
             self.create_mesh(start=(30*i),end=(30*(i+1)))
+
+    def init_planet(self, zz=-40000, rr=504000, N=61):
+        deg=np.mgrid[0:360:((N)*1j)]
+        rad=np.radians(deg)
+        phi,r=np.meshgrid(rad,(0,rr))
+        x=r*np.sin(phi)
+        y=r*np.cos(phi)
+        z=0*phi + zz;
+        mlab.mesh(x,y,z,color=(0,1,0))
 
     # Maybe this will work ...
     def initial_stacking(self,delay):
@@ -168,6 +178,7 @@ class Gondola():
             view=mlab.view()
             if view!=None:
                 self.view_distance=view[2]
+#            print("view_distance:", self.view_distance)
             state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
             print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,"LE:",self.lidar.lidar_elevation)

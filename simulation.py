@@ -61,12 +61,12 @@ class Visualization(HasTraits):
         #fig=mlab.gcf()
         #fig=mlab.figure(bgcolor=(0.52,0.8,0.92))
         #mlab.figure(bgcolor=(0.52,0.8,0.92))
-
+        self.scene.background = (0.52,0.8,0.92)
         # render backdrop
         # turns out if you try to render AN ENTIRE FUCKING PLANET
         # the cloud and dots don't show up because the resolution is off
         #earth=mlab.points3d(0,0,-6030000,mode='sphere',scale_factor=6000000,color=(0,0.25,0))
-        earth_horizon=mlab.barchart(0,0,-30000,mode='2dcircle',lateral_scale=200,scale_factor=30000,color=(0,0.25,0),reset_zoom=False)
+        #earth_horizon=mlab.barchart(0,0,-30000,mode='2dcircle',lateral_scale=200,scale_factor=30000,color=(0,0.25,0),reset_zoom=False)
         mlab.xlabel("origin")
         #mlab.ylabel("y")
         #mlab.zlabel("z")
