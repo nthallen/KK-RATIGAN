@@ -36,10 +36,26 @@ class OffButton(QtGui.QPushButton):
             self.off=True
             self.gondola.lidar_off=True
 
+# A class for changing the view
+class ViewButton(QtGui.QPushButton):
+    label="none"
+    gondola=None
+    
+    def __init__(self,string,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+
+    def handle_released(self):
+        self.gondola.update_camera()
+
 # A class for toggling the cloud's visibility
 class CloudButton(QtGui.QPushButton):
     label="none"
-    visible=None
+    visible=True
     gondola=None
     
     def __init__(self,string,gondola):
@@ -58,9 +74,11 @@ class CloudButton(QtGui.QPushButton):
         if self.visible:
             self.visible=False
             self.gondola.turn_cloud_off()
+            self.setText("Cloud ON")
         else:
             self.visible=True
             self.gondola.turn_cloud_on()
+            self.setText("Cloud OFF")
 
 # A class for the gondola's pause button.
 class PauseButton(QtGui.QPushButton):
@@ -84,9 +102,59 @@ class PauseButton(QtGui.QPushButton):
         if self.paused:
             self.paused=False
             self.gondola.paused=False
+            self.setText("Pause")
         else:
             self.paused=True
             self.gondola.paused=True
+            self.setText("Play")
+
+class CloudButton2(QtGui.QRadioButton):
+    label="none"
+    gondola=None
+    visible=True
+    
+    def __init__(self,string,gondola):
+        QtGui.QRadioButton.__init__(self,string,parent=None)
+        self.label=string
+        self.visible=True
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.toggled)
+        
+    def toggled(self):
+        if self.visible:
+            self.visible=False
+            self.gondola.turn_cloud_off()
+            self.label="Cloud OFF"
+        else:
+            self.visible=True
+            self.gondola.turn_cloud_on()
+            self.label="Cloud ON"
+
+class PauseButton2(QtGui.QRadioButton):
+    label="none"
+    gondola=None
+    paused=False
+    
+    def __init__(self,string,gondola):
+        QtGui.QRadioButton.__init__(self,string,parent=None)
+        self.label=string
+        self.paused=False
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.toggled)
+        
+    def toggled(self):
+        if self.paused:
+            self.paused=False
+            self.gondola.paused=False
+            self.label="PLAYING"
+        else:
+            self.paused=True
+            self.gondola.paused=True
+            self.label="PAUSED"
 
 # A class for the gondola's directional buttons.
 class DirectionButton(QtGui.QPushButton):
@@ -108,10 +176,11 @@ class DirectionButton(QtGui.QPushButton):
         
     def handle_released(self):
         self.start=self.gondola.return_time()
-        self.command_queue.add(lambda: self.gondola.pan(self.direction))
+        self.command_queue.add(lambda: self.gondola.turn(self.direction))
 
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
+    speed_label=None
     command_queue=None
     value=3
     gondola=None
@@ -128,18 +197,21 @@ class SpeedSlider(QtGui.QSlider):
         
     def value_changed(self,value):
         self.value=value
+        string="("+str(value)+")"
+        self.speed_label.setText(string)
         self.command_queue.add(lambda: self.gondola.set_speed(value))
 
 # A class for the slider that changes the speed of the gondola.
 class AngleSlider(QtGui.QSlider):
+    angle_label=None
     command_queue=None
-    value=45
+    value=23
     gondola=None
     def __init__(self,gondola,command):
         QtGui.QSlider.__init__(self, QtCore.Qt.Horizontal)
         QtGui.QSlider.setMinimum(self,0)
         QtGui.QSlider.setMaximum(self,45)
-        QtGui.QSlider.setValue(self,45)
+        QtGui.QSlider.setValue(self,23)
         self.gondola=gondola
         self.command_queue=command
 
@@ -148,6 +220,11 @@ class AngleSlider(QtGui.QSlider):
         
     def value_changed(self,value):
         self.value=value
+        if value<10:
+            string="(0"+str(value)+")"
+        else:
+            string="("+str(value)+")"
+        self.angle_label.setText(string)
         self.command_queue.add(lambda: self.gondola.set_angle(value))
 
 # A class to hold the command queue to implement command latency.

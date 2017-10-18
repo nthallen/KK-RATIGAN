@@ -47,7 +47,7 @@ class Lidar():
         self.hv_seq=bitvector.BitSequence(4,3)
         self.seq=self.hv_seq
         self.off=False
-        self.max_angle=45
+        self.max_angle=23
 
     # This method calculates the direction in which the LIDAR should be facing.
     def lidar_direction(self,azimuth,elevation):

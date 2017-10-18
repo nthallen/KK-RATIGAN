@@ -52,7 +52,7 @@ class Gondola():
         self.scan_angle=45
         self.cloud_is_visible=True
         self.init_cloud()
-        self.init_planet()
+        self.init_planet(zz=-40000*.005, rr=504000*.005)
 
     # This method creates the mesh of the cloud.
     def create_mesh(self,start,end,radius=50):
@@ -77,7 +77,7 @@ class Gondola():
         x=r*np.sin(phi)
         y=r*np.cos(phi)
         z=0*phi + zz;
-        mlab.mesh(x,y,z,color=(0,1,0))
+        mlab.mesh(x,y,z,color=(0,0.2,0))
 
     # Maybe this will work ...
     def initial_stacking(self,delay):
@@ -127,7 +127,7 @@ class Gondola():
     
     def turn_cloud_on(self):
         for disk in self.cloud:
-            disk.actor.property.opacity=1
+            disk.actor.property.opacity=0.5
         self.cloud_is_visible=True
     
     def trim_positions(self,position):
@@ -154,12 +154,45 @@ class Gondola():
         self.position1_label.setText(string_3)
         self.position2_label.setText(string_4)
     
+    def update_camera(self):
+        camera_view=mlab.view()
+        camera_azimuth=camera_view[0]
+        camera_elevation=camera_view[1]
+        camera_distance=camera_view[2]
+        camera_viewpoint=camera_view[3]
+        
+        x1=math.sin(math.radians(camera_elevation))*math.cos(math.radians(camera_azimuth))
+        y1=math.sin(math.radians(camera_elevation))*math.sin(math.radians(camera_azimuth))
+        z1=math.cos(math.radians(camera_elevation))
+
+        print("XYZ: {0:.2f},{1:.2f},{2:.2f}".format(x1,y1,z1))
+        
+        x1*=camera_distance
+        y1*=camera_distance
+        z1*=camera_distance
+
+        x2,y2,z2=camera_viewpoint
+        
+        x3=x2-x1
+        y3=y2-y1
+        z3=z2-z1
+        
+        new_focal_point=x3,y3,z3
+        
+        print(camera_viewpoint)
+        print(new_focal_point)
+        
+        new_distance=camera_distance*2
+        
+        mlab.view(azimuth=camera_azimuth,elevation=camera_elevation,distance=new_distance,focalpoint=new_focal_point)
+    
     # This method is the basic function that mandates all other changes in the gondola class.
     # This function occurs once every second (on the clock timeout) unless paused.
     def default(self):
         if not self.paused:
             self.lidar.scan()
-            print(" >>STATE",self.iteration,":: ",end='')
+            print(" >>STATE",self.iteration,"::",self.trim_positions(self.get_position()))
+            #print(" >>STATE",self.iteration,":: ",end='')
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
                     while not(self.command_queue.is_empty()):
@@ -178,15 +211,16 @@ class Gondola():
             view=mlab.view()
             if view!=None:
                 self.view_distance=view[2]
-#            print("view_distance:", self.view_distance)
+                #print("dist: {0:.2f}".format(self.view_distance))
+            #print("view_distance:", self.view_distance)
             state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
             self.state_queue.put(state)
-            print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,
-                  "LE: {0:.2f}".format(self.lidar.lidar_elevation),
-                  "View Az: {0:.2f}".format(view[0]),
-                  "El: {0:.2f}".format(view[1]),
-                  "dist: {0:.2f}".format(self.view_distance),
-                  "focus:", view[3])
+            #print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,
+            #      "LE: {0:.2f}".format(self.lidar.lidar_elevation),
+            #      "View Az: {0:.2f}".format(view[0]),
+            #      "El: {0:.2f}".format(view[1]),
+            #      "dist: {0:.2f}".format(self.view_distance),
+            #      "focus:", view[3])
             
             self.advance_in_queue()
             self.iteration+=1
@@ -230,7 +264,7 @@ class Gondola():
     def set_angle(self, angle):
         self.lidar.max_angle=angle
 
-    def pan(self,direction):
+    def turn(self,direction):
         azimuth=self.get_azimuth()
         if (direction==-1):
             self.set_azimuth(azimuth-10)

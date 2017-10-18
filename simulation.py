@@ -61,15 +61,16 @@ class Visualization(HasTraits):
         #fig=mlab.gcf()
         #fig=mlab.figure(bgcolor=(0.52,0.8,0.92))
         #mlab.figure(bgcolor=(0.52,0.8,0.92))
-        self.scene.background = (0.52,0.8,0.92)
+        self.scene.background = (0.42,0.7,0.82)
+        self.scene.foreground = (0,0.2,0)
         # render backdrop
         # turns out if you try to render AN ENTIRE FUCKING PLANET
         # the cloud and dots don't show up because the resolution is off
         #earth=mlab.points3d(0,0,-6030000,mode='sphere',scale_factor=6000000,color=(0,0.25,0))
         #earth_horizon = mlab.barchart(0,0,-30000,mode='2dcircle', lateral_scale=200,scale_factor=30000, color=(0,0.25,0),reset_zoom=False)
-        mlab.xlabel("origin")
-        #mlab.ylabel("y")
-        #mlab.zlabel("z")
+        
+        # For some reason this is the line that causes that annoying error message:
+        #mlab.xlabel("origin")
 
         #s = np.random.random((1000, 1000))
         #earth=mlab.imshow(s,colormap='gist_earth')
@@ -128,7 +129,7 @@ if __name__ == "__main__":
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
     #renderer.SetBackground
-
+    
     # Don't create a new QApplication, it would unhook the Events
     # set by Traits on the existing QApplication. Simply use the
     # '.instance()' method to retrieve the existing one.
@@ -164,8 +165,8 @@ if __name__ == "__main__":
     angle_slider = interactions.AngleSlider(gondola,command_queue)
     angle_slider.connect_value_changed()
     
-    button_l = interactions.DirectionButton("Pan Left",-1,gondola,command_queue)
-    button_r = interactions.DirectionButton("Pan Right",1,gondola,command_queue)
+    button_l = interactions.DirectionButton("Turn Left",-1,gondola,command_queue)
+    button_r = interactions.DirectionButton("Turn Right",1,gondola,command_queue)
     button_l.connect_released()
     button_r.connect_released()
     
@@ -176,9 +177,14 @@ if __name__ == "__main__":
     timer.timeout.connect(gondola.default)
     timer.start(1000)
     
-    pause_button=interactions.PauseButton("Pause/Play",gondola)
+    pause_button=interactions.PauseButton2("Toggle Playback",gondola)
     pause_button.connect_released()
-    cloud_button=interactions.CloudButton("Cloud On/Off",gondola)
+    cloud_button=interactions.CloudButton2("Toggle Cloud",gondola)
+    cloud_button.connect_released()
+    
+    pause_button=interactions.PauseButton("Pause",gondola)
+    pause_button.connect_released()
+    cloud_button=interactions.CloudButton("Cloud OFF",gondola)
     cloud_button.connect_released()
     
     combo_box = QtGui.QComboBox()
@@ -226,19 +232,42 @@ if __name__ == "__main__":
     
     az1_display=QtGui.QLabel()
     az2_display=QtGui.QLabel()
+    display_speed=QtGui.QLabel()
+    display_angle=QtGui.QLabel()
+    #display_speed.setStyleSheet("background-color: white")
+    display_speed.setStyleSheet("color: green")
+    #display_angle.setStyleSheet("background-color: white")
+    display_angle.setStyleSheet("color: green")
     position1_display=QtGui.QLabel()
     position2_display=QtGui.QLabel()
+    
     az1_display.setText("0")
     az2_display.setText("0")
+    
+    myFont=QtGui.QFont()
+    myFont.setBold(True)
+    display_speed.setFont(myFont)
+    display_angle.setFont(myFont)
+    
+    
+    display_speed.setText("(3)")
+    display_angle.setText("(23)")
     position1_display.setText("0")
     position2_display.setText("0")
+    
+    speed_slider.speed_label=display_speed
+    angle_slider.angle_label=display_angle
     
     layout_display.addWidget(az1_display,0,0)
     layout_display.addWidget(az2_display,0,1)
     layout_display.addWidget(position1_display,0,2)
     layout_display.addWidget(position2_display,0,3)
-    layout_4.addLayout(layout_speed_slider,0,0)
-    layout_4.addLayout(layout_angle_slider,0,1)
+    
+    layout_4.addWidget(display_speed,0,0)
+    layout_4.addLayout(layout_speed_slider,0,1)
+    layout_4.addWidget(display_angle,0,2)
+    layout_4.addLayout(layout_angle_slider,0,3)
+    
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
     gondola.az1_label=az1_display
@@ -246,11 +275,15 @@ if __name__ == "__main__":
     gondola.position1_label=position1_display
     gondola.position2_label=position2_display
     
+    #view_button=interactions.ViewButton("Distance", gondola)
+    #view_button.connect_released()
+    
     layout.addLayout(layout_2,1,0)
     layout.addLayout(layout_4,2,0)
     layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_display,5,0)
+    #layout.addWidget(view_button,6,0)
     
     container.show()
     window = QtGui.QMainWindow()
