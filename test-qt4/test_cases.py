@@ -6,7 +6,7 @@ def init_cloud():
     pre_x=np.mgrid[0:1000:11j]
     x,y=np.meshgrid(pre_x,pre_x)
     z=0*x
-    mlab.mesh(x,y,z,color=(1,1,1),representation='wireframe')
+    mlab.mesh(x,y,z,color=(0,0,0),representation='wireframe')
 
 def init_planet(zz=-40000, rr=504000, N=61):
     deg=np.mgrid[0:360:((N)*1j)]
