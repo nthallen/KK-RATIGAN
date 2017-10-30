@@ -71,7 +71,7 @@ class Visualization(HasTraits):
         
         # For some reason this is the line that causes that annoying error message:
         #mlab.xlabel("origin")
-
+        
         #s = np.random.random((1000, 1000))
         #earth=mlab.imshow(s,colormap='gist_earth')
 
@@ -249,9 +249,16 @@ if __name__ == "__main__":
     display_speed.setFont(myFont)
     display_angle.setFont(myFont)
     
-    
     display_speed.setText("(3)")
     display_angle.setText("(23)")
+    #print(display_speed.width())
+    #print(display_angle.width())
+    #display_speed.resize(1000,display_speed.height())
+    #display_angle.resize(1000,display_angle.height())
+    #print(display_speed.width())
+    #print(display_angle.width())
+    #display_speed.setGeometry(QtCore.QRect(display_speed.x(),display_speed.y(),display_speed.width()+500,display_speed.height()))
+    #display_angle.setGeometry(QtCore.QRect(display_angle.x(),display_angle.y(),display_angle.width()+500,display_angle.height()))
     position1_display.setText("0")
     position2_display.setText("0")
     
