@@ -3,7 +3,7 @@ from mayavi import mlab
 import sys
 
 def init_cloud():
-    pre_x=np.mgrid[0:1000:11j]
+    pre_x=np.mgrid[-500:500:11j]
     x,y=np.meshgrid(pre_x,pre_x)
     z=0*x
     mlab.mesh(x,y,z,color=(0,0,0),representation='wireframe')
@@ -22,6 +22,6 @@ def main():
     if (str(sys.argv[1])=="on"):
         init_planet()
     init_cloud()
-    mlab.view(-45,80,2000,(0,750,0))
+    mlab.view(-45,75,1500,(0,0,0))
     mlab.show()
 main()
