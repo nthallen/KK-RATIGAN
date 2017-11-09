@@ -7,7 +7,7 @@ import math
 import numpy as np
 from mayavi import mlab
 
-RESOLUTION=100
+RESOLUTION=20
 #(0.52,0.8,0.92) # Sky Blue Color
 
 # This method determines whether the given point is inside the cloud or not.
@@ -49,6 +49,31 @@ class Lidar():
         self.off=False
         self.max_angle=23
 
+    # This method provides values for the scalars of the lidar's line.
+    def lidar_retrieval(self,x,y,z,x_0,y_0,z_0,bin_length,azimuth):
+        dist=np.sqrt(np.power(x,2)+np.power(z,2))
+        lidar_range=np.sqrt(np.power(x-x_0,2)+np.power(y-y_0,2)+np.power(z-z_0,2))
+        beta=1e6
+        cloud_radius=50
+        cloud_max_density=5
+        background=0
+        density_1=cloud_max_density*np.exp(-(1/2)*np.power((dist/cloud_radius),2))
+        density=density_1+background
+        signal=(beta*bin_length*density)/np.power(lidar_range,2)
+        SN=0*signal
+        for i in range(1,len(signal)):
+            if (y[i] >= 0) and (y[i] <= 1500):
+                SN[i]=np.random.poisson(signal[i])
+            else:
+                SN[i] = 0
+            #if (azimuth==-90):
+                #print(i,SN[i],x[i],y[i],z[i],dist[i],lidar_range[i])
+        output=SN*np.power(lidar_range,2)/(beta*bin_length)
+        #for i in range(len(output)):
+            #if (output[i]>9) and (azimuth==-90):
+                #print(i,SN[i],output[i],x[i],y[i],z[i],dist[i],lidar_range[i])
+        return output
+
     # This method calculates the direction in which the LIDAR should be facing.
     def lidar_direction(self,azimuth,elevation):
         gondola_az_ma=simulation.azimuth_matrix(azimuth)
@@ -74,16 +99,14 @@ class Lidar():
     def lidar_line(self,azimuth,elevation,position):
         x1,y1,z1=position
         x2,y2,z2=self.lidar_direction(azimuth,elevation)
-        bin_dist=np.mgrid[100:2000:(RESOLUTION*1j)]
+        bin_dist=np.mgrid[100:2000:RESOLUTION]
         x = x1 + bin_dist*x2
         y = y1 + bin_dist*y2
         z = z1 + bin_dist*z2
-        t = 0*bin_dist
-        for i in range(len(bin_dist)):
-            t[i] = is_in_cloud((x[i],y[i],z[i]))
+        t=self.lidar_retrieval(x,y,z,x1,y1,z1,RESOLUTION,azimuth)
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
-                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys')
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
                 self.lidar_state_queue.put(new_line)
             else:
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=0)
@@ -95,7 +118,7 @@ class Lidar():
             if (self.off==False):
                 old_line=self.lidar_state_queue.get()
                 old_line.actor.property.opacity=1
-                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys')
+                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
                 self.lidar_state_queue.put(old_line)
             else:
                 old_line=self.lidar_state_queue.get()

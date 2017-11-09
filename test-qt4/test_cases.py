@@ -15,13 +15,13 @@ def init_planet(zz=-40000, rr=504000, N=61):
     x=r*np.sin(phi)
     y=r*np.cos(phi)
     z=0*phi + zz;
-    mlab.mesh(x,y,z,color=(0,0.2,0))
-    #planet.actor.property.opacity=0
+    planet=mlab.mesh(x,y,z,color=(0,0.2,0))
+    planet.actor.property.opacity=0
 
 def main():
     if (str(sys.argv[1])=="on"):
         init_planet()
     init_cloud()
-    mlab.view(-45,75,1500,(0,0,0))
+    mlab.view(-45,75,793,(500,-500,0))
     mlab.show()
 main()
