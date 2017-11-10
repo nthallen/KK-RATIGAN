@@ -6,6 +6,7 @@ import bitvector
 import math
 import numpy as np
 from mayavi import mlab
+import matplotlib.pyplot as plt
 
 RESOLUTION=20
 #(0.52,0.8,0.92) # Sky Blue Color
@@ -35,6 +36,8 @@ class Lidar():
     seq=None
     off=None
     max_angle=None
+    vmin=None
+    vmax=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -48,6 +51,23 @@ class Lidar():
         self.seq=self.hv_seq
         self.off=False
         self.max_angle=23
+        self.vmin=1
+        self.vmax=1
+
+    # This method graphs the results of the LIDAR retrieval.
+    def graph_lidar_results(self):
+        bin_length=30
+        fig = plt.figure()
+        fig.suptitle('LIDAR Retrieval', fontsize=14, fontweight='bold')
+
+        ax = fig.add_subplot(111)
+        ax.set_xlabel('counts')
+        ax.set_ylabel('bin limits')
+        total_range=self.vmax-self.vmin
+        bin_size=total_range/bin_length
+        ax.set_xlim([self.vmin,self.vmax])
+        ax.set_ylim([0,bin_length])
+        
 
     # This method provides values for the scalars of the lidar's line.
     def lidar_retrieval(self,x,y,z,x_0,y_0,z_0,bin_length,azimuth):
@@ -63,7 +83,12 @@ class Lidar():
         SN=0*signal
         for i in range(1,len(signal)):
             if (y[i] >= 0) and (y[i] <= 1500):
-                SN[i]=np.random.poisson(signal[i])
+                value=np.random.poisson(signal[i])
+                if value < self.vmin:
+                    self.vmin=value
+                if value > self.vmax:
+                    self.vmax=value
+                SN[i]=value
             else:
                 SN[i] = 0
             #if (azimuth==-90):

@@ -153,6 +153,7 @@ class Gondola():
         self.az2_label.setText(string_2)
         self.position1_label.setText(string_3)
         self.position2_label.setText(string_4)
+        self.lidar.graph_lidar_results()
     
     def update_camera(self):
         camera_view=mlab.view()
