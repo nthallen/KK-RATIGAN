@@ -22,6 +22,15 @@ def is_in_cloud(position):
             return 0
     return 0
 
+# A Class to hold LIDAR graphical and histogram information.
+class Lidar_Queue_Item():
+    lidar_line=None
+    lidar_output=None
+    
+    def __init__(self,line,output):
+        self.lidar_line=line
+        self.lidar_output=output
+
 # A class to hold information regarding the lidar and its lines.
 class Lidar():
     lidar_state_queue=None
@@ -38,6 +47,9 @@ class Lidar():
     max_angle=None
     vmin=None
     vmax=None
+    fig=None
+    ax=None
+    lidar_output=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -53,21 +65,37 @@ class Lidar():
         self.max_angle=23
         self.vmin=1
         self.vmax=1
+        self.fig=plt.figure()
+        self.fig.suptitle('LIDAR Retrieval', fontsize=14, fontweight='bold')
+        plt.ion()
 
     # This method graphs the results of the LIDAR retrieval.
     def graph_lidar_results(self):
-        bin_length=30
-        fig = plt.figure()
-        fig.suptitle('LIDAR Retrieval', fontsize=14, fontweight='bold')
-
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('counts')
-        ax.set_ylabel('bin limits')
+        plt.clf()
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_xlabel('counts')
+        self.ax.set_ylabel('bin limits')
         total_range=self.vmax-self.vmin
-        bin_size=total_range/bin_length
-        ax.set_xlim([self.vmin,self.vmax])
-        ax.set_ylim([0,bin_length])
+        bins=30
+        bin_length=total_range/bins
+        self.ax.set_xlim([self.vmin,self.vmax])
+        self.ax.set_ylim([0,bins])
         
+        bin_centers=(np.mgrid[0:bins+1:1]-0.5)*bin_length
+        bin_counts=[0]*(bins+1)
+        for queue_item in self.lidar_state_queue:
+            output=queue_item.lidar_output
+            for f_element in output:
+                element=f_element-self.vmin
+                element=math.floor(element/bin_length)
+                bin_counts[element]=bin_counts[element]+1
+        self.ax.plot(bin_centers,bin_counts)
+        #for i in range(len(bin_counts)-1, -1, -1):
+            #if bin_counts[i]>0:
+                #answer=i+(bin_length/2)
+                #if answer>=6:
+                    #self.vmax=answer
+        plt.pause(0.05)
 
     # This method provides values for the scalars of the lidar's line.
     def lidar_retrieval(self,x,y,z,x_0,y_0,z_0,bin_length,azimuth):
@@ -83,20 +111,16 @@ class Lidar():
         SN=0*signal
         for i in range(1,len(signal)):
             if (y[i] >= 0) and (y[i] <= 1500):
-                value=np.random.poisson(signal[i])
-                if value < self.vmin:
-                    self.vmin=value
-                if value > self.vmax:
-                    self.vmax=value
-                SN[i]=value
+                SN[i]=np.random.poisson(signal[i])
             else:
                 SN[i] = 0
-            #if (azimuth==-90):
-                #print(i,SN[i],x[i],y[i],z[i],dist[i],lidar_range[i])
         output=SN*np.power(lidar_range,2)/(beta*bin_length)
-        #for i in range(len(output)):
-            #if (output[i]>9) and (azimuth==-90):
-                #print(i,SN[i],output[i],x[i],y[i],z[i],dist[i],lidar_range[i])
+        for element in output:
+            if element < self.vmin:
+                self.vmin=element
+            if element > self.vmax:
+                self.vmax=element
+        self.lidar_output=output
         return output
 
     # This method calculates the direction in which the LIDAR should be facing.
@@ -132,24 +156,30 @@ class Lidar():
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
-                self.lidar_state_queue.put(new_line)
+                new_queue_item=Lidar_Queue_Item(new_line,t)
+                self.lidar_state_queue.put(new_queue_item)
             else:
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=0)
-                self.lidar_state_queue.put(new_line)
+                new_queue_item=Lidar_Queue_Item(new_line,t)
+                self.lidar_state_queue.put(new_queue_item)
             new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
             ms_sphere=new_sphere.mlab_source
             self.sphere_state_queue.put(ms_sphere)
         else:
             if (self.off==False):
-                old_line=self.lidar_state_queue.get()
+                old_queue_item=self.lidar_state_queue.get()
+                old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=1
                 old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
-                self.lidar_state_queue.put(old_line)
+                old_queue_item.line=old_line
+                self.lidar_state_queue.put(old_queue_item)
             else:
-                old_line=self.lidar_state_queue.get()
+                old_queue_item=self.lidar_state_queue.get()
+                old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=0
+                old_queue_item.lidar_line=old_line
                 #old_line.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys')
-                self.lidar_state_queue.put(old_line)
+                self.lidar_state_queue.put(old_queue_item)
             old_sphere=self.sphere_state_queue.get()
             old_sphere.set(x=x1,y=y1,z=z1,reset_zoom=False,color=(1,1,1))
             self.sphere_state_queue.put(old_sphere)
