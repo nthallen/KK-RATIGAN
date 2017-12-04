@@ -28,6 +28,7 @@ class Gondola():
     command_latency=0
     lidar_off=False
     scan_angle=0
+    graph_on=None
     
     az1_label=None
     az2_label=None
@@ -53,6 +54,7 @@ class Gondola():
         self.cloud_is_visible=True
         self.init_cloud()
         self.init_planet(zz=-40000*.005, rr=504000*.005)
+        self.graph_on=False
 
     # This method creates the mesh of the cloud.
     def create_mesh(self,start,end,radius=50):
@@ -153,7 +155,8 @@ class Gondola():
         self.az2_label.setText(string_2)
         self.position1_label.setText(string_3)
         self.position2_label.setText(string_4)
-        self.lidar.graph_lidar_results()
+        if (self.graph_on):
+            self.lidar.graph_lidar_results()
     
     def update_camera(self):
         camera_view=mlab.view()
@@ -264,6 +267,13 @@ class Gondola():
 
     def set_angle(self, angle):
         self.lidar.max_angle=angle
+
+    def turn_lidar(self,direction):
+        azimuth=self.get_azimuth()
+        if (direction==-1):
+            self.set_azimuth(azimuth-10)
+        if (direction==1):
+            self.set_azimuth(azimuth+10)
 
     def turn(self,direction):
         azimuth=self.get_azimuth()

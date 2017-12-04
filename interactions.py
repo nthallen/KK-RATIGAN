@@ -80,6 +80,23 @@ class CloudButton(QtGui.QPushButton):
             self.gondola.turn_cloud_on()
             self.setText("Cloud OFF")
 
+# A button to turn on the LIDAR graph.
+class LidarGraphButton(QtGui.QPushButton):
+    label="none"
+    gondola=None
+
+    def __init__(self,string,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.gondola=gondola
+    
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+    
+    def handle_released(self):
+        self.gondola.graph_on=True
+        self.gondola.lidar.handle_openings()
+
 # A class for the gondola's pause button.
 class PauseButton(QtGui.QPushButton):
     label="none"
@@ -177,6 +194,28 @@ class DirectionButton(QtGui.QPushButton):
     def handle_released(self):
         self.start=self.gondola.return_time()
         self.command_queue.add(lambda: self.gondola.turn(self.direction))
+
+# A class for the gondola's directional buttons.
+class LidarDirectionButton(QtGui.QPushButton):
+    command_queue=None
+    label = "none"
+    direction=0
+    gondola=None
+    start=None
+    
+    def __init__(self,string,direction,gondola,command):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.direction=direction
+        self.gondola=gondola
+        self.command_queue=command
+        
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+        
+    def handle_released(self):
+        self.start=self.gondola.return_time()
+        self.command_queue.add(lambda: self.gondola.turn_lidar(self.direction))
 
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):

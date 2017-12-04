@@ -151,6 +151,7 @@ if __name__ == "__main__":
     mayavi_widget = MayaviQWidget(container)
     
     gondola = gondola.Gondola((750,750,0),wait=latency,c_l=command_latency,max_size=maxsize)
+    gondola.lidar.gondola=gondola
     command_queue=interactions.Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue
     
@@ -290,6 +291,11 @@ if __name__ == "__main__":
     layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_display,5,0)
+    
+    graph_button=interactions.LidarGraphButton("Graph LIDAR Data",gondola)
+    graph_button.connect_released()
+    layout.addWidget(graph_button,6,0)
+    
     #layout.addWidget(view_button,6,0)
     
     container.show()

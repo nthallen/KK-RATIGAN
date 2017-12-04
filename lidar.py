@@ -33,6 +33,7 @@ class Lidar_Queue_Item():
 
 # A class to hold information regarding the lidar and its lines.
 class Lidar():
+    gondola=None
     lidar_state_queue=None
     sphere_state_queue=None
     max_size=None
@@ -50,6 +51,8 @@ class Lidar():
     fig=None
     ax=None
     lidar_output=None
+    plot=None
+    old_fig=None
 
     def __init__(self,maxsize):
         self.max_size=maxsize
@@ -65,13 +68,20 @@ class Lidar():
         self.max_angle=23
         self.vmin=1
         self.vmax=1
+
+    def handle_openings(self):
         self.fig=plt.figure()
-        self.fig.suptitle('LIDAR Retrieval', fontsize=14, fontweight='bold')
+        self.plot=plt
         plt.ion()
+        self.fig.canvas.mpl_connect('close_event', self.handle_close)
+
+    def handle_close(self,evt):
+        self.gondola.graph_on=False
 
     # This method graphs the results of the LIDAR retrieval.
     def graph_lidar_results(self):
-        plt.clf()
+        self.plot.clf()
+        self.fig.suptitle('LIDAR Retrieval', fontsize=14, fontweight='bold')
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel('counts')
         self.ax.set_ylabel('bin limits')
@@ -95,7 +105,7 @@ class Lidar():
                 #answer=i+(bin_length/2)
                 #if answer>=6:
                     #self.vmax=answer
-        plt.pause(0.05)
+        self.plot.pause(0.05)
 
     # This method provides values for the scalars of the lidar's line.
     def lidar_retrieval(self,x,y,z,x_0,y_0,z_0,bin_length,azimuth):
