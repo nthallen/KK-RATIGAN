@@ -48,12 +48,16 @@ class Lidar():
     max_angle=None
     vmin=None
     vmax=None
+    lidar_vmin=None
+    lidar_vmax=None
     fig=None
     ax=None
     lidar_output=None
     plot=None
     old_fig=None
+    manual_max_override=False
 
+    # Initialization method.
     def __init__(self,maxsize):
         self.max_size=maxsize
         self.lidar_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
@@ -68,15 +72,38 @@ class Lidar():
         self.max_angle=23
         self.vmin=1
         self.vmax=1
+        self.lidar_vmin=1
+        self.lidar_vmax=1
 
+    # This method sets up the graph when its window is told to open.
     def handle_openings(self):
         self.fig=plt.figure()
         self.plot=plt
         plt.ion()
         self.fig.canvas.mpl_connect('close_event', self.handle_close)
+        self.fig.canvas.mpl_connect('button_press_event', self.handle_click)
 
+    # This method assures that the proper booleans are set when the graph window closes.
     def handle_close(self,evt):
         self.gondola.graph_on=False
+
+    # This method maps vmin and vmax to mouse click locations.
+    def handle_click(self,evt):
+        x_pos=evt.xdata
+        #left_dist=math.fabs(x_pos-self.vmin)
+        #right_dist=math.fabs(self.vmax-x_pos)
+        self.vmin=x_pos
+        self.plot.axvline(self.vmin,color=(1,0,0))
+        print("   >>> new vmin ::",self.vmin)
+        #if (left_dist < right_dist):
+        #    self.vmin=x_pos
+        #    self.plot.axvline(self.vmin,color=(1,0,0))
+        #    print("   >>> new vmin ::",self.vmin)
+        #else:
+        #    self.vmax=x_pos
+        #    self.plot.axvline(self.vmax,color=(0,1,0))
+        #    print("   >>> new vmax ::",self.vmax)
+        self.manual_max_override=True
 
     # This method graphs the results of the LIDAR retrieval.
     def graph_lidar_results(self):
@@ -85,19 +112,24 @@ class Lidar():
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel('counts')
         self.ax.set_ylabel('bin limits')
-        total_range=self.vmax-self.vmin
+        total_range=self.lidar_vmax-self.lidar_vmin
         bins=30
         bin_length=total_range/bins
-        self.ax.set_xlim([self.vmin,self.vmax])
+        self.ax.set_xlim([0,(self.lidar_vmax)])
         self.ax.set_ylim([0,bins])
         
         bin_centers=(np.mgrid[0:bins+1:1]-0.5)*bin_length
         bin_counts=[0]*(bins+1)
+        #self.plot.axvline(self.vmax,color=(0,1,0))
+        if (self.vmin==None):
+            self.vmin=0
+        self.plot.axvline(self.vmin,color=(1,0,0))
         for queue_item in self.lidar_state_queue:
             output=queue_item.lidar_output
             for f_element in output:
                 element=f_element-self.vmin
                 element=math.floor(element/bin_length)
+                #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
         self.ax.plot(bin_centers,bin_counts)
         #for i in range(len(bin_counts)-1, -1, -1):
@@ -125,11 +157,13 @@ class Lidar():
             else:
                 SN[i] = 0
         output=SN*np.power(lidar_range,2)/(beta*bin_length)
-        for element in output:
-            if element < self.vmin:
-                self.vmin=element
-            if element > self.vmax:
-                self.vmax=element
+        if not(self.manual_max_override):
+            for element in output:
+                if element < self.lidar_vmin:
+                    self.lidar_vmin=element
+                if element > self.lidar_vmax:
+                    self.lidar_vmax=element
+                    self.vmax=element
         self.lidar_output=output
         return output
 
@@ -165,11 +199,11 @@ class Lidar():
         t=self.lidar_retrieval(x,y,z,x1,y1,z1,RESOLUTION,azimuth)
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
-                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
                 new_queue_item=Lidar_Queue_Item(new_line,t)
                 self.lidar_state_queue.put(new_queue_item)
             else:
-                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Greys',opacity=0)
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',opacity=0)
                 new_queue_item=Lidar_Queue_Item(new_line,t)
                 self.lidar_state_queue.put(new_queue_item)
             new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
@@ -180,7 +214,7 @@ class Lidar():
                 old_queue_item=self.lidar_state_queue.get()
                 old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=1
-                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys',vmin=0,vmax=6)
+                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
                 old_queue_item.line=old_line
                 self.lidar_state_queue.put(old_queue_item)
             else:

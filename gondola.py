@@ -195,7 +195,7 @@ class Gondola():
     def default(self):
         if not self.paused:
             self.lidar.scan()
-            print(" >>STATE",self.iteration,"::",self.trim_positions(self.get_position()))
+            print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
             #print(" >>STATE",self.iteration,":: ",end='')
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
