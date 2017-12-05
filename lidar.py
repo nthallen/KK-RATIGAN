@@ -185,7 +185,8 @@ class Lidar():
         az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
         azimuth=az_el[0]
         elevation=az_el[1]
-        self.lidar_azimuth=azimuth
+        if (azimuth!=0):
+            self.lidar_azimuth=azimuth
         self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.

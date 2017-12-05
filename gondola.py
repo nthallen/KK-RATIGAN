@@ -35,8 +35,8 @@ class Gondola():
     position1_label=None
     position2_label=None
     
-    lidar_azimuth=0
-    lidar_elevation=0
+    lidar_azimuth=None
+    lidar_elevation=None
     
     def __init__(self,position,wait,c_l,max_size):
         self.iteration=wait
@@ -55,6 +55,7 @@ class Gondola():
         self.init_cloud()
         self.init_planet(zz=-40000*.005, rr=504000*.005)
         self.graph_on=False
+        self.lidar_azimuth=0
 
     # This method creates the mesh of the cloud.
     def create_mesh(self,start,end,radius=50):
@@ -274,6 +275,15 @@ class Gondola():
             self.set_azimuth(azimuth-10)
         if (direction==1):
             self.set_azimuth(azimuth+10)
+
+    def turn_lidar_scan(self,direction):
+        azimuth=self.lidar_azimuth
+        if (direction==-1):
+            self.lidar_azimuth=azimuth-10
+            self.lidar.lidar_azimuth=azimuth-10
+        if (direction==1):
+            self.lidar_azimuth=azimuth+10
+            self.lidar.lidar_azimuth=azimuth+10
 
     def turn(self,direction):
         azimuth=self.get_azimuth()
