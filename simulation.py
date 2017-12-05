@@ -120,11 +120,11 @@ class MayaviQWidget(QtGui.QWidget):
 
 # Main method
 if __name__ == "__main__":
-    # The important stuff
-    latency=0           # The number of iterations for gondola results to reach ground
-    command_latency=0   # The number of iterations for ground commands to reach the gondola
-    reliability=1       # The probability that a command will follow through to the gondola
-    maxsize=20          # The maximum size of the graphical objects queues, both positional spheres and LIDAR lines
+    # THE IMPORTANT VARIABLES
+    latency=0           # The number of iterations for gondola results to reach ground (downlink latency)
+    command_latency=0   # The number of iterations for ground commands to reach the gondola (uplink latency)
+    reliability=1       # The probability that a command will follow through to the gondola, 0 being 0% and 1 being 100%
+    maxsize=36          # The maximum size of the graphical objects queues, both positional spheres and LIDAR lines
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -171,8 +171,15 @@ if __name__ == "__main__":
     button_l.connect_released()
     button_r.connect_released()
     
+    lidar_button_l=interactions.LidarScanDirectionButton("LIDAR Scan Left",-1,gondola,command_queue)
+    lidar_button_r=interactions.LidarScanDirectionButton("LIDAR Scan Right",1,gondola,command_queue)
+    lidar_button_l.connect_released()
+    lidar_button_r.connect_released()
+    
     layout_2.addWidget(button_l,0,0)
-    layout_2.addWidget(button_r,0,1)
+    layout_2.addWidget(lidar_button_l,0,1)
+    layout_2.addWidget(lidar_button_r,0,2)
+    layout_2.addWidget(button_r,0,3)
     
     timer=QtCore.QTimer()
     timer.timeout.connect(gondola.default)
