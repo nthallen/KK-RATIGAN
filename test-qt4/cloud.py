@@ -205,7 +205,7 @@ class Cloud():
     
     def draw_mesh(self):
         self.do_the_math()
-        #s=np.ones_like(self.P_x)
+        s=np.ones_like(self.P_x)
         self.ring.reset(x=self.P_x,y=self.P_y,z=self.P_z,scalars=s)
         
         #radius + scale_factor*age
