@@ -150,7 +150,7 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    gondola = gondola.Gondola((750,750,0),wait=latency,c_l=command_latency,max_size=maxsize)
+    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize)
     gondola.lidar.gondola=gondola
     command_queue=interactions.Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue
@@ -196,10 +196,10 @@ if __name__ == "__main__":
     cloud_button.connect_released()
     
     combo_box = QtGui.QComboBox()
+    combo_box.addItem("LIDAR OFF")
     combo_box.addItem("LIDAR Multi Scan")
     combo_box.addItem("LIDAR Horizontal Scan")
     combo_box.addItem("LIDAR Vertical Scan")
-    combo_box.addItem("LIDAR OFF")
     combo_box.activated[str].connect(gondola.mode_select)
     
     layout_speed_slider=QtGui.QGridLayout()

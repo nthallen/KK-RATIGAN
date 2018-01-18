@@ -68,7 +68,7 @@ class Lidar():
         self.v_seq=bitvector.BitSequenceVertical(4)
         self.hv_seq=bitvector.BitSequence(4,3)
         self.seq=self.hv_seq
-        self.off=False
+        self.off=True
         self.max_angle=23
         self.vmin=1
         self.vmax=1

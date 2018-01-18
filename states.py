@@ -4,7 +4,7 @@ import copy
 
 # A class to hold vital information regarding the Gondola.
 class Gondola_State():
-    current_position=(300,750,0)
+    current_position=(0,0,0)
     gondola_azimuth=0
     gondola_elevation=0
     gondola_speed=3
