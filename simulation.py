@@ -150,7 +150,7 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize)
+    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=5)
     gondola.lidar.gondola=gondola
     command_queue=interactions.Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue

@@ -11,6 +11,7 @@ from mayavi import mlab
 
 # A class to hold information regarding the Gondola.
 class Gondola():
+    rotation_severity=None
     new_cloud=None
     cloud_is_visible=None
     state=None
@@ -74,7 +75,7 @@ class Gondola():
     lidar_azimuth=None
     lidar_elevation=None
     
-    def __init__(self,position,wait,c_l,max_size):
+    def __init__(self,position,wait,c_l,max_size,r_s):
         self.direction_vector=[0,1,0]
         self.gondola_length=1.5
         self.iteration=wait
@@ -95,6 +96,7 @@ class Gondola():
         self.graph_on=False
         self.lidar_azimuth=0
         self.nozzle_position=np.array(self.get_position())-(self.gondola_length/2)*np.array(self.direction_vector)
+        self.rotation_severity=r_s
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -103,6 +105,7 @@ class Gondola():
 
     def init_cloud(self):
         self.new_cloud=cloud.Cloud(16,150,1,(0,1,0))
+        self.current_circle=self.new_cloud.current_circle
 
     def place_circle(self):
         time=self.iteration
@@ -348,7 +351,7 @@ class Gondola():
     def turn(self,direction):
         azimuth=self.get_azimuth()
         if (direction==-1):
-            self.set_azimuth(azimuth-10)
+            self.set_azimuth(azimuth-self.rotation_severity)
         if (direction==1):
-            self.set_azimuth(azimuth+10)
+            self.set_azimuth(azimuth+self.rotation_severity)
         self.direction_vector=[np.sin(self.get_azimuth()),np.cos(self.get_azimuth()),0]
