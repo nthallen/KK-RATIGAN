@@ -11,15 +11,17 @@ class Circle():
     origin=None
     birth=None
     normal_vector=None
+    cloud=None
     
-    def __init__(self,radius,origin,age,normal_vector):
+    def __init__(self,radius,origin,age,normal_vector,cl):
         self.radius=radius
         self.origin=origin
         self.birth=age
         self.normal_vector=normal_vector
+        self.cloud=cl
     
     def return_age(self):
-        global time
+        time=self.cloud.gondola.return_time()
         return time-self.birth
 
 # A class to hold data on the new cloud object.
@@ -44,8 +46,8 @@ class Cloud():
         self.M=M
         self.N=N
         self.circles=[]
-        circle_1=Circle(50,(0,-5,0),0,(0,1,0))
-        circle_2=Circle(50,(0,5,0),0,(0,1,0))
+        circle_1=Circle(50,(0,-5,0),0,(0,1,0),self)
+        circle_2=Circle(50,(0,5,0),0,(0,1,0),self)
         self.circles.append(circle_1)
         self.circles.append(circle_2)
         self.current_circle=circle_2
@@ -70,8 +72,8 @@ class Cloud():
             self.ring.mlab_source.reset(x=self.P_x,y=self.P_y,z=self.P_z,scalars=s)
             self.ring.mlab_source.set(x=self.P_x,y=self.P_y,z=self.P_z)
     
-    def add_circle(self,radius,origin,age,normal_vector):
-        new_circle=Circle(radius,origin,age,normal_vector)
+    def add_circle(self,radius,origin,age,normal_vector,cloud):
+        new_circle=Circle(radius,origin,age,normal_vector,cloud)
         self.circles.append(new_circle)
         self.current_circle=new_circle
         #print("New circle at",new_circle.origin,"created at time",new_circle.birth)

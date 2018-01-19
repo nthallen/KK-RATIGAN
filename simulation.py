@@ -152,10 +152,11 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=rotation,res=resolution)
-    gondola.lidar.gondola=gondola
-    command_queue=interactions.Command_Queue(gondola,rel=reliability)
-    gondola.command_queue=command_queue
+    new_gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=rotation,res=resolution)
+    new_gondola.lidar.gondola=new_gondola
+    new_gondola.new_cloud.gondola=new_gondola
+    command_queue=interactions.Command_Queue(new_gondola,rel=reliability)
+    new_gondola.command_queue=command_queue
     
     layout_2 = QtGui.QGridLayout()
     layout_display = QtGui.QGridLayout()
@@ -163,18 +164,18 @@ if __name__ == "__main__":
     layout_5 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
 
-    speed_slider = interactions.SpeedSlider(gondola,command_queue)
+    speed_slider = interactions.SpeedSlider(new_gondola,command_queue)
     speed_slider.connect_value_changed()
-    angle_slider = interactions.AngleSlider(gondola,command_queue)
+    angle_slider = interactions.AngleSlider(new_gondola,command_queue)
     angle_slider.connect_value_changed()
     
-    button_l = interactions.DirectionButton("Turn Left",-1,gondola,command_queue)
-    button_r = interactions.DirectionButton("Turn Right",1,gondola,command_queue)
+    button_l = interactions.DirectionButton("Turn Left",-1,new_gondola,command_queue)
+    button_r = interactions.DirectionButton("Turn Right",1,new_gondola,command_queue)
     button_l.connect_released()
     button_r.connect_released()
     
-    lidar_button_l=interactions.LidarScanDirectionButton("LIDAR Scan Left",-1,gondola,command_queue)
-    lidar_button_r=interactions.LidarScanDirectionButton("LIDAR Scan Right",1,gondola,command_queue)
+    lidar_button_l=interactions.LidarScanDirectionButton("LIDAR Scan Left",-1,new_gondola,command_queue)
+    lidar_button_r=interactions.LidarScanDirectionButton("LIDAR Scan Right",1,new_gondola,command_queue)
     lidar_button_l.connect_released()
     lidar_button_r.connect_released()
     
@@ -184,14 +185,14 @@ if __name__ == "__main__":
     layout_2.addWidget(button_r,0,3)
     
     timer=QtCore.QTimer()
-    timer.timeout.connect(gondola.default)
+    timer.timeout.connect(new_gondola.default)
     timer.start(1000)
     
-    pause_button=interactions.PauseButton("Pause",gondola)
+    pause_button=interactions.PauseButton("Pause",new_gondola)
     pause_button.connect_released()
-    cloud_button=interactions.CloudButton("Cloud OFF",gondola)
+    cloud_button=interactions.CloudButton("Cloud OFF",new_gondola)
     cloud_button.connect_released()
-    cloud_spray_button=interactions.CloudSprayOff("Terminate Cloud Spray",gondola)
+    cloud_spray_button=interactions.CloudSprayOff("Terminate Cloud Spray",new_gondola)
     cloud_spray_button.connect_released()
     
     combo_box = QtGui.QComboBox()
@@ -199,7 +200,7 @@ if __name__ == "__main__":
     combo_box.addItem("LIDAR Multi Scan")
     combo_box.addItem("LIDAR Horizontal Scan")
     combo_box.addItem("LIDAR Vertical Scan")
-    combo_box.activated[str].connect(gondola.mode_select)
+    combo_box.activated[str].connect(new_gondola.mode_select)
     
     layout_speed_slider=QtGui.QGridLayout()
     layout_speed_labels=QtGui.QGridLayout()
@@ -207,7 +208,7 @@ if __name__ == "__main__":
     layout_angle_labels=QtGui.QGridLayout()
     
     speed_slider_name=QtGui.QLabel()
-    speed_slider_name.setText("Speed")
+    speed_slider_name.setText("Gondola Movement Speed")
     speed_slider_name.setAlignment(QtCore.Qt.AlignCenter)
     speed_slider_min=QtGui.QLabel()
     speed_slider_min.setText("0")
@@ -215,7 +216,7 @@ if __name__ == "__main__":
     speed_slider_max.setText("3")
     speed_slider_max.setAlignment(QtCore.Qt.AlignRight)
     angle_slider_name=QtGui.QLabel()
-    angle_slider_name.setText("Angle")
+    angle_slider_name.setText("LIDAR Scan Angle")
     angle_slider_name.setAlignment(QtCore.Qt.AlignCenter)
     angle_slider_min=QtGui.QLabel()
     angle_slider_min.setText("0")
@@ -285,10 +286,10 @@ if __name__ == "__main__":
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
     layout_5.addWidget(cloud_spray_button,0,2)
-    gondola.az1_label=az1_display
-    gondola.az2_label=az2_display
-    gondola.position1_label=position1_display
-    gondola.position2_label=position2_display
+    new_gondola.az1_label=az1_display
+    new_gondola.az2_label=az2_display
+    new_gondola.position1_label=position1_display
+    new_gondola.position2_label=position2_display
     
     #view_button=interactions.ViewButton("Distance", gondola)
     #view_button.connect_released()
@@ -299,7 +300,7 @@ if __name__ == "__main__":
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_display,5,0)
     
-    graph_button=interactions.LidarGraphButton("Graph LIDAR Data",gondola)
+    graph_button=interactions.LidarGraphButton("Graph LIDAR Data",new_gondola)
     graph_button.connect_released()
     layout.addWidget(graph_button,6,0)
     

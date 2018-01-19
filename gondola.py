@@ -93,7 +93,7 @@ class Gondola():
         self.scan_angle=45
         self.cloud_is_visible=True
         self.init_cloud()
-        self.init_planet(zz=-40000*.005, rr=504000*.005)
+        #self.init_planet(zz=-40000*.005, rr=504000*.005)
         self.graph_on=False
         self.lidar_azimuth=0
         self.nozzle_position=np.array(self.get_position())-(self.gondola_length/2)*np.array(self.direction_vector)
@@ -113,7 +113,7 @@ class Gondola():
         distance=self.calculate_distance()
         if (distance>=0):
             new_origin=self.nozzle_position+(10-distance)*np.array(self.direction_vector)
-            self.new_cloud.add_circle(50,new_origin,time,self.direction_vector)
+            self.new_cloud.add_circle(50,new_origin,time,self.direction_vector,self.new_cloud)
 
     def calculate_distance(self):
         current=self.current_circle
