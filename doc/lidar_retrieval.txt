@@ -1,0 +1,13 @@
+Lidar retrieval with complex cloud model
+
+  The currently implemented cloud model is made up of a mesh defined by series of circles. The mesh surface is an arbitrary representation of the extent of the particle cloud, but the underlying particle densities will be determined using a continuous random distribution, making the actual cloud boundary nebulous.
+
+  The origins of the circles are laid out along the direction of travel. We will call the volume bounded by the planes of two adjacent circles a cloud cell. For any point P in space, it is easy to determine which side of a plane the point is on. Given a circle with origin O and normal vector N, dot((P-O),N) will be positive on forward side and negative on the reverse side. Let's define d(P,n) = dot((P-O(n)),N(n)) to be this distance function for point P relative to circle n.
+
+  If travel proceeds in a straight line, and there is no shear, then for any point P, d(P,n) will be strictly decreasing as n increases. The planes unambiguously divide space into distinct volumes, so any point in space falls into no more than one cell, and we can use that cell's attributes to calculate the particle density.
+
+    P is in the cell between circles n and n+1 if d(P,n) >= 0 and d(P,n+1) < 0. [1]
+  
+  If the gondola turns during particle generation, the planes defining cell boundaries will no longer be parallel, and d(P,n) will no longer be strictly decreasing. This is particularly true for points further away from circles' origins.
+  
+  It is our current plan to distribute particles in a straight line, and we expect deviations from straight travel to be minor. As such, the distance from the circle origins where plane intersections will occur are expected to be relatively large and hence the particle densities relatively small. For this reason, I think it is reasonable to assume, as a first cut at least, that getting the concentrations precisely correct in the overlap regions is not critical. Hence it is sufficient to identify any cell meeting criteria [1].
