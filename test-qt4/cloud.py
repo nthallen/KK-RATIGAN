@@ -195,8 +195,7 @@ class Cloud():
         self.shear_magnitude=s_m
         self.shear_direction=s_d
         self.do_the_math()
-        first_ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
-        self.ring=first_ring.mlab_source
+        self.ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
     
     def age(self):
         scale_factor=1
@@ -205,18 +204,10 @@ class Cloud():
     
     def draw_mesh(self):
         self.do_the_math()
-        s=np.ones_like(self.P_x)
-        self.ring.reset(x=self.P_x,y=self.P_y,z=self.P_z,scalars=s)
-        
-        #radius + scale_factor*age
-        
-        #,color=(1,1,1),opacity=1,reset_zoom=False
+        s=np.ones(np.shape(self.P_x))
+        self.ring.mlab_source.reset(x=self.P_x,y=self.P_y,z=self.P_z,scalars=s)
+        self.ring.mlab_source.set(x=self.P_x,y=self.P_y,z=self.P_z)
         #self.ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
-        
-        #for old_ring in self.rings:
-        #    old_ring.actor.property.opacity=0
-        #new_ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
-        #self.rings.append(new_ring)
     
     def add_circle(self,radius,origin,age,normal_vector):
         new_circle=Circle(radius,origin,age,normal_vector)
