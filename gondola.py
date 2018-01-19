@@ -56,7 +56,8 @@ class Gondola():
     lidar=None
     command_queue=None
     command_latency=0
-    lidar_off=False
+    lidar_off=True
+    cloud_spray_off=False
     scan_angle=0
     graph_on=None
     gondola_cloud_data=None
@@ -75,7 +76,7 @@ class Gondola():
     lidar_azimuth=None
     lidar_elevation=None
     
-    def __init__(self,position,wait,c_l,max_size,r_s):
+    def __init__(self,position,wait,c_l,max_size,r_s,res):
         self.direction_vector=[0,1,0]
         self.gondola_length=1.5
         self.iteration=wait
@@ -86,7 +87,7 @@ class Gondola():
         else:
             self.state_queue=queue.Queue()
         self.paused=False
-        self.lidar=lidar.Lidar(maxsize=max_size)
+        self.lidar=lidar.Lidar(maxsize=max_size,resolution=res)
         self.command_latency=c_l
         self.lidar.off=True
         self.scan_angle=45
@@ -147,6 +148,8 @@ class Gondola():
             self.command_queue.add(lambda: self.set_h_seq())
             self.command_queue.add(lambda: self.turn_lidar_on())
         if (mode=="LIDAR Vertical Scan"):
+            self.lidar.lidar_azimuth=self.get_azimuth()
+            self.lidar_azimuth=self.get_azimuth()
             self.command_queue.add(lambda: self.set_v_seq())
             self.command_queue.add(lambda: self.turn_lidar_on())
         if (mode=="LIDAR OFF"):
@@ -251,7 +254,8 @@ class Gondola():
     # This function occurs once every second (on the clock timeout) unless paused.
     def default(self):
         if not self.paused:
-            self.lidar.scan()
+            if not (self.lidar_off):
+                self.lidar.scan()
             print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
             #print(" >>STATE",self.iteration,":: ",end='')
             if (self.command_latency != 0):
@@ -270,8 +274,9 @@ class Gondola():
             self.move_gondola()
             # New code added as of 18 Jan 2018
             self.new_cloud.age()
-            self.place_circle()
-            self.current_circle=self.new_cloud.current_circle
+            if not (self.cloud_spray_off):
+                self.place_circle()
+                self.current_circle=self.new_cloud.current_circle
             self.create_mesh()
             
             view=mlab.view()
@@ -354,4 +359,4 @@ class Gondola():
             self.set_azimuth(azimuth-self.rotation_severity)
         if (direction==1):
             self.set_azimuth(azimuth+self.rotation_severity)
-        self.direction_vector=[np.sin(self.get_azimuth()),np.cos(self.get_azimuth()),0]
+        self.direction_vector=[np.sin(np.radians(self.get_azimuth())),np.cos(np.radians(self.get_azimuth())),0]

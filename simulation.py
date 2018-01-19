@@ -125,6 +125,8 @@ if __name__ == "__main__":
     command_latency=0   # The number of iterations for ground commands to reach the gondola (uplink latency)
     reliability=1       # The probability that a command will follow through to the gondola, 0 being 0% and 1 being 100%
     maxsize=36          # The maximum size of the graphical objects queues, both positional spheres and LIDAR lines
+    rotation=10          # The number of degrees each turn command will move the direction of the gondola
+    resolution=20       # The resolution of the LIDAR
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -150,7 +152,7 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=5)
+    gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=rotation,res=resolution)
     gondola.lidar.gondola=gondola
     command_queue=interactions.Command_Queue(gondola,rel=reliability)
     gondola.command_queue=command_queue
@@ -185,15 +187,12 @@ if __name__ == "__main__":
     timer.timeout.connect(gondola.default)
     timer.start(1000)
     
-    pause_button=interactions.PauseButton2("Toggle Playback",gondola)
-    pause_button.connect_released()
-    cloud_button=interactions.CloudButton2("Toggle Cloud",gondola)
-    cloud_button.connect_released()
-    
     pause_button=interactions.PauseButton("Pause",gondola)
     pause_button.connect_released()
     cloud_button=interactions.CloudButton("Cloud OFF",gondola)
     cloud_button.connect_released()
+    cloud_spray_button=interactions.CloudSprayOff("Terminate Cloud Spray",gondola)
+    cloud_spray_button.connect_released()
     
     combo_box = QtGui.QComboBox()
     combo_box.addItem("LIDAR OFF")
@@ -285,6 +284,7 @@ if __name__ == "__main__":
     
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
+    layout_5.addWidget(cloud_spray_button,0,2)
     gondola.az1_label=az1_display
     gondola.az2_label=az2_display
     gondola.position1_label=position1_display

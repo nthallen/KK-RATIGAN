@@ -36,6 +36,29 @@ class OffButton(QtGui.QPushButton):
             self.off=True
             self.gondola.lidar_off=True
 
+# A class for the gondola's cloud spray end button.
+class CloudSprayOff(QtGui.QPushButton):
+    label="none"
+    off=False
+    gondola=None
+    
+    def __init__(self,string,gondola):
+        QtGui.QPushButton.__init__(self,string)
+        self.label=string
+        self.off=False
+        self.gondola=gondola
+
+    def connect_released(self):
+        self.released.connect(self.handle_released)
+
+    def handle_released(self):
+        self.turn_off()
+
+    def turn_off(self):
+        self.off=True
+        self.gondola.cloud_spray_off=True
+        self.setText("Cloud Spray Terminated")
+
 # A class for changing the view
 class ViewButton(QtGui.QPushButton):
     label="none"
@@ -124,54 +147,6 @@ class PauseButton(QtGui.QPushButton):
             self.paused=True
             self.gondola.paused=True
             self.setText("Play")
-
-class CloudButton2(QtGui.QRadioButton):
-    label="none"
-    gondola=None
-    visible=True
-    
-    def __init__(self,string,gondola):
-        QtGui.QRadioButton.__init__(self,string,parent=None)
-        self.label=string
-        self.visible=True
-        self.gondola=gondola
-
-    def connect_released(self):
-        self.released.connect(self.toggled)
-        
-    def toggled(self):
-        if self.visible:
-            self.visible=False
-            self.gondola.turn_cloud_off()
-            self.label="Cloud OFF"
-        else:
-            self.visible=True
-            self.gondola.turn_cloud_on()
-            self.label="Cloud ON"
-
-class PauseButton2(QtGui.QRadioButton):
-    label="none"
-    gondola=None
-    paused=False
-    
-    def __init__(self,string,gondola):
-        QtGui.QRadioButton.__init__(self,string,parent=None)
-        self.label=string
-        self.paused=False
-        self.gondola=gondola
-
-    def connect_released(self):
-        self.released.connect(self.toggled)
-        
-    def toggled(self):
-        if self.paused:
-            self.paused=False
-            self.gondola.paused=False
-            self.label="PLAYING"
-        else:
-            self.paused=True
-            self.gondola.paused=True
-            self.label="PAUSED"
 
 # A class for the gondola's directional buttons.
 class DirectionButton(QtGui.QPushButton):

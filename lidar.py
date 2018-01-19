@@ -8,7 +8,6 @@ import numpy as np
 from mayavi import mlab
 import matplotlib.pyplot as plt
 
-RESOLUTION=20
 #(0.52,0.8,0.92) # Sky Blue Color
 
 # This method determines whether the given point is inside the cloud or not.
@@ -56,9 +55,10 @@ class Lidar():
     plot=None
     old_fig=None
     manual_max_override=False
+    lidar_resolution=None
 
     # Initialization method.
-    def __init__(self,maxsize):
+    def __init__(self,maxsize,resolution):
         self.max_size=maxsize
         self.lidar_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
         self.sphere_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
@@ -74,6 +74,7 @@ class Lidar():
         self.vmax=1
         self.lidar_vmin=1
         self.lidar_vmax=1
+        self.lidar_resolution=resolution
 
     # This method sets up the graph when its window is told to open.
     def handle_openings(self):
@@ -140,23 +141,24 @@ class Lidar():
         self.plot.pause(0.05)
 
     # This method provides values for the scalars of the lidar's line.
-    def lidar_retrieval(self,x,y,z,x_0,y_0,z_0,bin_length,azimuth):
+    def lidar_retrieval(self,x,y,z,lidar_range):
+        # x,y,z are the vectors defining the centerpoint of the LIDAR bins.
+        # lidar_range is equal to bin_dist
         dist=np.sqrt(np.power(x,2)+np.power(z,2))
-        lidar_range=np.sqrt(np.power(x-x_0,2)+np.power(y-y_0,2)+np.power(z-z_0,2))
         beta=1e6
         cloud_radius=50
         cloud_max_density=5
         background=0
         density_1=cloud_max_density*np.exp(-(1/2)*np.power((dist/cloud_radius),2))
         density=density_1+background
-        signal=(beta*bin_length*density)/np.power(lidar_range,2)
+        signal=(beta*self.lidar_resolution*density)/np.power(lidar_range,2)
         SN=0*signal
         for i in range(1,len(signal)):
             if (y[i] >= 0) and (y[i] <= 1500):
                 SN[i]=np.random.poisson(signal[i])
             else:
                 SN[i] = 0
-        output=SN*np.power(lidar_range,2)/(beta*bin_length)
+        output=SN*np.power(lidar_range,2)/(beta*self.lidar_resolution)
         if not(self.manual_max_override):
             for element in output:
                 if element < self.lidar_vmin:
@@ -185,19 +187,18 @@ class Lidar():
         az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
         azimuth=az_el[0]
         elevation=az_el[1]
-        if (azimuth!=0):
-            self.lidar_azimuth=azimuth
+        self.lidar_azimuth=azimuth
         self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position):
         x1,y1,z1=position
         x2,y2,z2=self.lidar_direction(azimuth,elevation)
-        bin_dist=np.mgrid[100:2000:RESOLUTION]
+        bin_dist=np.mgrid[100:2000:self.lidar_resolution]
         x = x1 + bin_dist*x2
         y = y1 + bin_dist*y2
         z = z1 + bin_dist*z2
-        t=self.lidar_retrieval(x,y,z,x1,y1,z1,RESOLUTION,azimuth)
+        t=self.lidar_retrieval(x,y,z,bin_dist)
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
