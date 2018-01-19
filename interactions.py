@@ -217,7 +217,6 @@ class LidarScanDirectionButton(QtGui.QPushButton):
         self.start=self.gondola.return_time()
         self.command_queue.add(lambda: self.gondola.turn_lidar_scan(self.direction))
 
-
 # A class for the gondola's directional buttons.
 class LidarDirectionButton(QtGui.QPushButton):
     command_queue=None
