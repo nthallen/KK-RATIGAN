@@ -75,8 +75,10 @@ class Gondola():
     
     lidar_azimuth=None
     lidar_elevation=None
+    shear_azimuth=None
+    shear_magnitude=None
     
-    def __init__(self,position,wait,c_l,max_size,r_s,res):
+    def __init__(self,position,wait,c_l,max_size,r_s,res,s_a,s_m):
         self.direction_vector=[0,1,0]
         self.gondola_length=1.5
         self.iteration=wait
@@ -92,12 +94,14 @@ class Gondola():
         self.lidar.off=True
         self.scan_angle=45
         self.cloud_is_visible=True
-        self.init_cloud()
         #self.init_planet(zz=-40000*.005, rr=504000*.005)
         self.graph_on=False
         self.lidar_azimuth=0
         self.nozzle_position=np.array(self.get_position())-(self.gondola_length/2)*np.array(self.direction_vector)
         self.rotation_severity=r_s
+        self.shear_azimuth=s_a
+        self.shear_magnitude=s_m
+        self.init_cloud()
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -105,7 +109,7 @@ class Gondola():
             self.new_cloud.draw_mesh()
 
     def init_cloud(self):
-        self.new_cloud=cloud.Cloud(16,150,1,(0,1,0))
+        self.new_cloud=cloud.Cloud(16,150,self.shear_magnitude,self.shear_azimuth,self)
         self.current_circle=self.new_cloud.current_circle
 
     def place_circle(self):

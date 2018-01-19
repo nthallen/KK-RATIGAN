@@ -37,12 +37,13 @@ class Cloud():
     P_z=None
     current_circle=None
     shear_magnitude=None
+    shear_azimuth=None
     shear_direction=None
     ring=None
     visible=None
     
     # N is the number of circles, M is the number of points around the circle.
-    def __init__(self,M,N,s_m,s_d):
+    def __init__(self,M,N,s_m,s_a,g):
         self.M=M
         self.N=N
         self.circles=[]
@@ -55,7 +56,9 @@ class Cloud():
         self.P_y=[]
         self.P_z=[]
         self.shear_magnitude=s_m
-        self.shear_direction=s_d
+        self.shear_azimuth=s_a
+        self.gondola=g
+        self.shear_direction=[np.sin(np.radians(self.shear_azimuth)),np.cos(np.radians(self.shear_azimuth)),0]
         self.do_the_math()
         self.ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
         self.visible=True
@@ -109,16 +112,22 @@ class Cloud():
         Z=np.zeros((3,N))
         R=np.zeros((1,N))
         
+        circle_ages=np.zeros((1,N))
+        
         for n in range(N):
             Y=self.circles[n].normal_vector
             z_n=np.array([0,0,1])
             x_n=np.cross(Y,z_n)
             R[0][n]=self.circles[n].radius
+            circle_ages[0][n]=self.circles[n].return_age()
             
             for i in range(3):
                 X[i][n]=x_n[i]
                 Z[i][n]=z_n[i]
         
-        self.P_x=O_x+np.multiply(m_col*np.multiply(X[0],R),cos_grid)+np.multiply(m_col*np.multiply(Z[0],R),sin_grid)
-        self.P_y=O_y+np.multiply(m_col*np.multiply(X[1],R),cos_grid)+np.multiply(m_col*np.multiply(Z[1],R),sin_grid)
+        age_grid=m_col*circle_ages
+        
         self.P_z=O_z+np.multiply(m_col*np.multiply(X[2],R),cos_grid)+np.multiply(m_col*np.multiply(Z[2],R),sin_grid)
+        z_age_grid=np.multiply(age_grid,self.P_z)/1000
+        self.P_x=O_x+np.multiply(m_col*np.multiply(X[0],R),cos_grid)+np.multiply(m_col*np.multiply(Z[0],R),sin_grid)+(z_age_grid*self.shear_magnitude*self.shear_direction[0])
+        self.P_y=O_y+np.multiply(m_col*np.multiply(X[1],R),cos_grid)+np.multiply(m_col*np.multiply(Z[1],R),sin_grid)+(z_age_grid*self.shear_magnitude*self.shear_direction[1])

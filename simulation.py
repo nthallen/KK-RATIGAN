@@ -125,8 +125,10 @@ if __name__ == "__main__":
     command_latency=0   # The number of iterations for ground commands to reach the gondola (uplink latency)
     reliability=1       # The probability that a command will follow through to the gondola, 0 being 0% and 1 being 100%
     maxsize=36          # The maximum size of the graphical objects queues, both positional spheres and LIDAR lines
-    rotation=10          # The number of degrees each turn command will move the direction of the gondola
+    rotation=10         # The number of degrees each turn command will move the direction of the gondola
     resolution=20       # The resolution of the LIDAR
+    shear_azimuth=0     # Accounting for wind
+    shear_magnitude=0   # In meters/second/kilometer
 
     vtk.vtkObject.GlobalWarningDisplayOff()
     #renderer=vtk.vtkRenderer()
@@ -152,9 +154,9 @@ if __name__ == "__main__":
             # label_list.append(label)
     mayavi_widget = MayaviQWidget(container)
     
-    new_gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=rotation,res=resolution)
+    new_gondola = gondola.Gondola((0,0,0),wait=latency,c_l=command_latency,max_size=maxsize,r_s=rotation,res=resolution,s_a=shear_azimuth,s_m=shear_magnitude)
     new_gondola.lidar.gondola=new_gondola
-    new_gondola.new_cloud.gondola=new_gondola
+    #new_gondola.new_cloud.gondola=new_gondola
     command_queue=interactions.Command_Queue(new_gondola,rel=reliability)
     new_gondola.command_queue=command_queue
     
