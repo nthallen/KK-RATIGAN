@@ -82,6 +82,26 @@ class Cloud():
         #print("New circle at",new_circle.origin,"created at time",new_circle.birth)
         self.draw_mesh()
     
+    def create_age_array(self):
+        ages=[]
+        for circle in self.circles:
+            ages.append(circle.return_age())
+        return ages
+    
+    def d(self,P,n):
+        ages=self.create_age_array()
+        circle_c=self.circles[n]
+        P_1=(P-(P[2]-circle_c.origin[2])*self.shear_magnitude*ages[n]*self.shear_direction)/1000
+        return np.dot((P_1-circle_c.origin),circle_c.normal_vector)
+    
+    def check_cell(self,P):
+        for n in range(len(self.circles)):
+            dN,dR=self.d(P,n)
+            dN_1,dR_1=self.d(P,(n+1))
+            if (dN >= 0) and (dN_1 < 0):
+                # point P is in the cell between circles n and n+1
+                return n
+    
     def do_the_math(self):
         N=len(self.circles)
         origins=np.zeros((3,N))
