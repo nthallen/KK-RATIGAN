@@ -192,28 +192,6 @@ class LidarScanDirectionButton(QtGui.QPushButton):
         self.start=self.gondola.return_time()
         self.command_queue.add(lambda: self.gondola.turn_lidar_scan(self.direction))
 
-# A class for the gondola's directional buttons.
-class LidarDirectionButton(QtGui.QPushButton):
-    command_queue=None
-    label = "none"
-    direction=0
-    gondola=None
-    start=None
-    
-    def __init__(self,string,direction,gondola,command):
-        QtGui.QPushButton.__init__(self,string)
-        self.label=string
-        self.direction=direction
-        self.gondola=gondola
-        self.command_queue=command
-        
-    def connect_released(self):
-        self.released.connect(self.handle_released)
-        
-    def handle_released(self):
-        self.start=self.gondola.return_time()
-        self.command_queue.add(lambda: self.gondola.turn_lidar(self.direction))
-
 # A class for the slider that changes the speed of the gondola.
 class SpeedSlider(QtGui.QSlider):
     speed_label=None

@@ -37,13 +37,15 @@ class Lidar():
     sphere_state_queue=None
     max_size=None
     lidar_azimuth=None
+    lidar_scan_azimuth=None
     lidar_elevation=None
+    lidar_scan_elevation=None
     reference_direction=[0,1,0]
     h_seq=None
     v_seq=None
     hv_seq=None
     seq=None
-    off=None
+    off=True
     max_angle=None
     vmin=None
     vmax=None
@@ -56,6 +58,7 @@ class Lidar():
     old_fig=None
     manual_max_override=False
     lidar_resolution=None
+    new_cloud=None
 
     # Initialization method.
     def __init__(self,maxsize,resolution):
@@ -63,7 +66,9 @@ class Lidar():
         self.lidar_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
         self.sphere_state_queue=interactions.IndexableQueue(maxsize=self.max_size)
         self.lidar_azimuth=0
+        self.lidar_scan_azimuth=0
         self.lidar_elevation=0
+        self.lidar_scan_elevation=0
         self.h_seq=bitvector.BitSequenceHorizontal(4)
         self.v_seq=bitvector.BitSequenceVertical(4)
         self.hv_seq=bitvector.BitSequence(4,3)
@@ -144,12 +149,17 @@ class Lidar():
     def lidar_retrieval(self,x,y,z,lidar_range):
         # x,y,z are the vectors defining the centerpoint of the LIDAR bins.
         # lidar_range is equal to bin_dist
-        dist=np.sqrt(np.power(x,2)+np.power(z,2))
+        
+        #dist=np.sqrt(np.power(x,2)+np.power(z,2))
         beta=1e6
-        cloud_radius=50
-        cloud_max_density=5
+        #cloud_radius=50
+        #cloud_max_density=5
+        
         background=0
-        density_1=cloud_max_density*np.exp(-(1/2)*np.power((dist/cloud_radius),2))
+        #density_1=cloud_max_density*np.exp(-(1/2)*np.power((dist/cloud_radius),2))
+        density_1=np.zeros(np.shape(x))
+        for i in range(len(x)):
+            density_1[i]=self.new_cloud.check_cell(np.array((x[i],y[i],z[i])))
         density=density_1+background
         signal=(beta*self.lidar_resolution*density)/np.power(lidar_range,2)
         SN=0*signal
@@ -173,8 +183,8 @@ class Lidar():
     def lidar_direction(self,azimuth,elevation):
         gondola_az_ma=simulation.azimuth_matrix(azimuth)
         gondola_el_ma=simulation.elevation_matrix(elevation)
-        lidar_az_ma=simulation.azimuth_matrix(self.lidar_azimuth)
-        lidar_el_ma=simulation.elevation_matrix(self.lidar_elevation)
+        lidar_az_ma=simulation.azimuth_matrix(self.lidar_scan_azimuth)
+        lidar_el_ma=simulation.elevation_matrix(self.lidar_scan_elevation)
         step_1=np.matmul(gondola_el_ma,gondola_az_ma)
         step_2=np.matmul(lidar_el_ma,lidar_az_ma)
         step_3=np.matmul(step_2,step_1)
@@ -185,10 +195,22 @@ class Lidar():
         degrees_horizontal=self.max_angle
         degrees_vertical=self.max_angle/2
         az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
-        azimuth=az_el[0]
-        elevation=az_el[1]
-        self.lidar_azimuth=azimuth
-        self.lidar_elevation=elevation
+        self.lidar_scan_azimuth=az_el[0]
+        self.lidar_scan_elevation=az_el[1]
+        #self.lidar_azimuth=azimuth
+        #self.lidar_elevation=elevation
+        #if (azimuth!=0):
+        #    self.lidar_azimuth=azimuth
+        #    self.lidar_elevation=elevation
+        #if (azimuth==0) and (self.seq==self.v_seq):
+        #    self.lidar_azimuth=0
+        #    self.lidar_elevation=elevation
+        #if (azimuth==0) and (self.seq==self.h_seq):
+        #    self.lidar_azimuth=azimuth
+        #    self.lidar_elevation=0
+        #else:
+        #    self.lidar_azimuth=azimuth
+        #    self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position):

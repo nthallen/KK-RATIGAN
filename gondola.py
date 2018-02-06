@@ -56,7 +56,6 @@ class Gondola():
     lidar=None
     command_queue=None
     command_latency=0
-    lidar_off=True
     cloud_spray_off=False
     scan_angle=0
     graph_on=None
@@ -73,10 +72,12 @@ class Gondola():
     position1_label=None
     position2_label=None
     
-    lidar_azimuth=None
-    lidar_elevation=None
     shear_azimuth=None
     shear_magnitude=None
+    
+    distance_to_next_circle=None
+    stuff_quantum=None
+    circle_distance=None
     
     def __init__(self,position,wait,c_l,max_size,r_s,res,s_a,s_m):
         self.direction_vector=[0,1,0]
@@ -96,12 +97,15 @@ class Gondola():
         self.cloud_is_visible=True
         #self.init_planet(zz=-40000*.005, rr=504000*.005)
         self.graph_on=False
-        self.lidar_azimuth=0
         self.nozzle_position=np.array(self.get_position())-(self.gondola_length/2)*np.array(self.direction_vector)
         self.rotation_severity=r_s
         self.shear_azimuth=s_a
         self.shear_magnitude=s_m
         self.init_cloud()
+        self.lidar.new_cloud=self.new_cloud
+        self.distance_to_next_circle=10
+        self.stuff_quantum=200
+        self.circle_distance=10
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -116,8 +120,26 @@ class Gondola():
         time=self.iteration
         distance=self.calculate_distance()
         if (distance>=0):
-            new_origin=self.nozzle_position+(10-distance)*np.array(self.direction_vector)
+            new_origin=self.nozzle_position+(self.circle_distance-distance)*np.array(self.direction_vector)
             self.new_cloud.add_circle(50,new_origin,time,self.direction_vector,self.new_cloud)
+            
+            n=len(self.new_cloud.circles)
+            cell_prev=self.new_cloud.circles[n-3]
+            cell_current=self.new_cloud.circles[n-2]
+            
+            d1=distance
+            d2=self.distance_to_next_circle
+            cell_prev.stuff+=self.stuff_quantum*(d1/(d1+d2))
+            cell_current.stuff+=self.stuff_quantum*(d2/(d1+d2))
+            
+            self.distance_to_next_circle=self.circle_distance-distance
+        else:
+            # We're still in the old cell
+            n=len(self.new_cloud.circles)
+            cell_current=self.new_cloud.circles[n-2]
+            cell_current.stuff+=self.stuff_quantum
+            
+            self.distance_to_next_circle=-distance
 
     def calculate_distance(self):
         current=self.current_circle
@@ -137,7 +159,7 @@ class Gondola():
     def initial_stacking(self,delay):
         for i in range(delay):
             self.move_gondola()
-            state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
+            state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed(),self.lidar.lidar_azimuth)
             self.state_queue.put(state)
 
     # Returns time since start of simulation.
@@ -149,15 +171,20 @@ class Gondola():
             self.command_queue.add(lambda: self.set_hv_seq())
             self.command_queue.add(lambda: self.turn_lidar_on())
         if (mode=="LIDAR Horizontal Scan"):
+            self.command_queue.add(lambda: self.set_lidar_azimuth_to_gondola_azimuth())
             self.command_queue.add(lambda: self.set_h_seq())
             self.command_queue.add(lambda: self.turn_lidar_on())
         if (mode=="LIDAR Vertical Scan"):
-            self.lidar.lidar_azimuth=self.get_azimuth()
-            self.lidar_azimuth=self.get_azimuth()
+            self.command_queue.add(lambda: self.set_lidar_azimuth_to_gondola_azimuth())
             self.command_queue.add(lambda: self.set_v_seq())
             self.command_queue.add(lambda: self.turn_lidar_on())
         if (mode=="LIDAR OFF"):
+            self.command_queue.add(lambda: self.set_lidar_azimuth_to_gondola_azimuth())
             self.command_queue.add(lambda: self.turn_lidar_off())
+
+    def set_lidar_azimuth_to_gondola_azimuth(self):
+        self.lidar.lidar_azimuth=self.get_azimuth()
+        self.lidar.lidar_elevation=self.get_elevation()
 
     def set_h_seq(self):
         self.lidar.seq=self.lidar.h_seq
@@ -169,11 +196,9 @@ class Gondola():
         self.lidar.seq=self.lidar.hv_seq
 
     def turn_lidar_on(self):
-        self.lidar_off=False
         self.lidar.off=False
 
     def turn_lidar_off(self):
-        self.lidar_off=True
         self.lidar.off=True
 
     def turn_cloud_off(self):
@@ -203,11 +228,15 @@ class Gondola():
         z=math.floor(z*10)/10
         return (x,y,z)
 
+    def draw_lidar_line(self,current_state):
+        self.lidar.lidar_line(current_state.get_lidar_azimuth(),current_state.get_elevation(),current_state.get_position())
+
     # This function should update the camera and view with the next state in the queue.
     def advance_in_queue(self):
         current_state=self.state_queue.get()
         x,y,z=current_state.get_position()
-        self.lidar.lidar_line(current_state.get_azimuth(),current_state.get_elevation(),current_state.get_position())
+        self.draw_lidar_line(current_state)
+        #self.lidar.lidar_line(current_state.get_lidar_azimuth(),current_state.get_elevation(),current_state.get_position())
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
         
         # Update the labels in the GUI
@@ -258,10 +287,6 @@ class Gondola():
     # This function occurs once every second (on the clock timeout) unless paused.
     def default(self):
         if not self.paused:
-            if not (self.lidar_off):
-                self.lidar.scan()
-            print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
-            #print(" >>STATE",self.iteration,":: ",end='')
             if (self.command_latency != 0):
                 if not(self.command_queue.is_empty()):
                     while not(self.command_queue.is_empty()):
@@ -276,6 +301,12 @@ class Gondola():
                     c=self.command_queue.execute()[0]
                     c()
             self.move_gondola()
+            
+            if not(self.lidar.off):
+                self.lidar.scan()
+            print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
+            #print(" >>STATE",self.iteration,":: ",end='')
+            
             # New code added as of 18 Jan 2018
             self.new_cloud.age()
             if not (self.cloud_spray_off):
@@ -288,7 +319,7 @@ class Gondola():
                 self.view_distance=view[2]
                 #print("dist: {0:.2f}".format(self.view_distance))
             #print("view_distance:", self.view_distance)
-            state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed())
+            state=states.Gondola_State(self.get_position(),self.get_azimuth(),self.get_elevation(),self.get_speed(),self.lidar.lidar_azimuth)
             self.state_queue.put(state)
             #print("GA:",self.get_azimuth(),"LA:",self.lidar.lidar_azimuth,
             #      "LE: {0:.2f}".format(self.lidar.lidar_elevation),
@@ -300,6 +331,7 @@ class Gondola():
             self.advance_in_queue()
             self.iteration+=1
 
+    # This method moves the gondola's position, according to the direction vector and the speed.
     def move_gondola(self):
         x1,y1,z1=self.get_position()
         el_ma=simulation.elevation_matrix(self.get_elevation())
@@ -341,26 +373,20 @@ class Gondola():
     def set_angle(self, angle):
         self.lidar.max_angle=angle
 
-    def turn_lidar(self,direction):
-        azimuth=self.get_azimuth()
-        if (direction==-1):
-            self.set_azimuth(azimuth-10)
-        if (direction==1):
-            self.set_azimuth(azimuth+10)
-
     def turn_lidar_scan(self,direction):
-        azimuth=self.lidar_azimuth
+        azimuth=self.lidar.lidar_azimuth
         if (direction==-1):
-            self.lidar_azimuth=azimuth-10
-            self.lidar.lidar_azimuth=azimuth-10
+            self.lidar.lidar_azimuth=azimuth-self.rotation_severity
         if (direction==1):
-            self.lidar_azimuth=azimuth+10
-            self.lidar.lidar_azimuth=azimuth+10
+            self.lidar.lidar_azimuth=azimuth+self.rotation_severity
 
     def turn(self,direction):
         azimuth=self.get_azimuth()
+        lidar_azimuth=self.lidar.lidar_azimuth
         if (direction==-1):
             self.set_azimuth(azimuth-self.rotation_severity)
+            self.lidar.lidar_azimuth=lidar_azimuth-self.rotation_severity
         if (direction==1):
             self.set_azimuth(azimuth+self.rotation_severity)
+            self.lidar.lidar_azimuth=lidar_azimuth+self.rotation_severity
         self.direction_vector=[np.sin(np.radians(self.get_azimuth())),np.cos(np.radians(self.get_azimuth())),0]

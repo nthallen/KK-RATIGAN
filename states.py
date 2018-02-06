@@ -8,12 +8,14 @@ class Gondola_State():
     gondola_azimuth=0
     gondola_elevation=0
     gondola_speed=3
+    lidar_azimuth=0
     
-    def __init__(self,position,azimuth,elevation,speed):
+    def __init__(self,position,azimuth,elevation,speed,lidar_azimuth):
         self.current_position=position
         self.gondola_azimuth=azimuth
         self.gondola_elevation=elevation
         self.gondola_speed=speed
+        self.lidar_azimuth=lidar_azimuth
 
     def copy(self):
         return copy.deepcopy(self)
@@ -29,6 +31,9 @@ class Gondola_State():
     
     def get_speed(self):
         return self.gondola_speed
+    
+    def get_lidar_azimuth(self):
+        return self.lidar_azimuth
 
 # A class to hold information regarding the position of the gondola and its representative dots.
 class Sphere_State():

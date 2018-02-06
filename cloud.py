@@ -12,6 +12,7 @@ class Circle():
     birth=None
     normal_vector=None
     cloud=None
+    stuff=None
     
     def __init__(self,radius,origin,age,normal_vector,cl):
         self.radius=radius
@@ -19,6 +20,7 @@ class Circle():
         self.birth=age
         self.normal_vector=normal_vector
         self.cloud=cl
+        self.stuff=0
     
     def return_age(self):
         time=self.cloud.gondola.return_time()
@@ -62,6 +64,7 @@ class Cloud():
         self.do_the_math()
         self.ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
         self.visible=True
+        self.distance_to_next_circle=10
     
     def age(self):
         scale_factor=0.1
@@ -82,25 +85,40 @@ class Cloud():
         #print("New circle at",new_circle.origin,"created at time",new_circle.birth)
         self.draw_mesh()
     
+    # This method returns an array of all circles' ages currently in the cloud.
     def create_age_array(self):
         ages=[]
         for circle in self.circles:
             ages.append(circle.return_age())
         return ages
-    
+
     def d(self,P,n):
-        ages=self.create_age_array()
+        #ages=self.create_age_array()
         circle_c=self.circles[n]
-        P_1=(P-(P[2]-circle_c.origin[2])*self.shear_magnitude*ages[n]*self.shear_direction)/1000
-        return np.dot((P_1-circle_c.origin),circle_c.normal_vector)
+        P_1=P-((P[2]-circle_c.origin[2])*self.shear_magnitude*circle_c.return_age()*np.array(self.shear_direction))/1000
+        dN=np.dot((P_1-circle_c.origin),circle_c.normal_vector)
+        if (dN>=0):
+            #P_2=(P_1-dN*circle_c.normal_vector)
+            P_2=(P_1-circle_c.origin)-dN*np.array(circle_c.normal_vector)
+            dR=np.sqrt(np.sum(np.square(P_2)))
+        else:
+            dR=0
+        return (dN,dR)
     
+    # Given point P, this function determines which cell - if any - P is in
+    # and calculates the number density of the appropriate cell.
     def check_cell(self,P):
         for n in range(len(self.circles)):
             dN,dR=self.d(P,n)
             dN_1,dR_1=self.d(P,(n+1))
             if (dN >= 0) and (dN_1 < 0):
                 # point P is in the cell between circles n and n+1
-                return n
+                cell_current=self.circles[n]
+                c_r=cell_current.radius
+                density_1=(cell_current.stuff/(c_r*np.sqrt(2*np.pi)))*np.exp(-(1/2)*np.power((dR/c_r),2))
+                return density_1
+            else:
+                return 0
     
     def do_the_math(self):
         N=len(self.circles)
