@@ -134,8 +134,13 @@ class Lidar():
         for queue_item in self.lidar_state_queue:
             output=queue_item.lidar_output
             for f_element in output:
-                element=f_element-self.vmin
-                element=math.floor(element/bin_length)
+                if (f_element<self.vmin):
+                    element=0
+                elif (f_element>self.lidar_vmax):
+                    element=bins
+                else:
+                    element=f_element-self.vmin
+                    element=math.floor(element/bin_length)
                 #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
         self.ax.plot(bin_centers,bin_counts)
