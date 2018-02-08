@@ -123,6 +123,7 @@ class Lidar():
         bin_length=total_range/bins
         self.ax.set_xlim([0,(self.lidar_vmax)])
         self.ax.set_ylim([0,bins])
+        print('lidar_vmin,max: ', self.lidar_vmin, self.lidar_vmax)
         
         bin_centers=(np.mgrid[0:bins+1:1]-0.5)*bin_length
         bin_counts=[0]*(bins+1)
@@ -138,6 +139,7 @@ class Lidar():
                 #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
         self.ax.plot(bin_centers,bin_counts)
+        print(bin_counts)
         #for i in range(len(bin_counts)-1, -1, -1):
             #if bin_counts[i]>0:
                 #answer=i+(bin_length/2)
@@ -159,11 +161,11 @@ class Lidar():
         #density_1=cloud_max_density*np.exp(-(1/2)*np.power((dist/cloud_radius),2))
         density_1=np.zeros(np.shape(x))
         for i in range(len(x)):
-            density_1[i]=self.new_cloud.check_cell(np.array((x[i],y[i],z[i])))
+            density_1[i]=self.new_cloud.check_cell(np.array((x[i],y[i],z[i])),i,lidar_range[i])
         density=density_1+background
         signal=(beta*self.lidar_resolution*density)/np.power(lidar_range,2)
         SN=0*signal
-        for i in range(1,len(signal)):
+        for i in range(len(signal)):
             if (y[i] >= 0) and (y[i] <= 1500):
                 SN[i]=np.random.poisson(signal[i])
             else:
@@ -176,6 +178,9 @@ class Lidar():
                 if element > self.lidar_vmax:
                     self.lidar_vmax=element
                     self.vmax=element
+        #print("density_1[0]",density_1[0],"signal[0]",signal[0])
+        #print("SN[0]",SN[0],"output[0]",output[0])
+        #print(output)
         self.lidar_output=output
         return output
 
@@ -220,7 +225,14 @@ class Lidar():
         x = x1 + bin_dist*x2
         y = y1 + bin_dist*y2
         z = z1 + bin_dist*z2
-        t=self.lidar_retrieval(x,y,z,bin_dist)
+        if not(self.off):
+            #print(x[0])
+            #print(y[0])
+            #print(z[0])
+            #print(bin_dist[0])
+            t=self.lidar_retrieval(x,y,z,bin_dist)
+        else:
+            t=[0]*z
         if (self.lidar_state_queue.qsize()<self.max_size):
             if (self.off==False):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)

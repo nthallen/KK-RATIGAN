@@ -95,30 +95,46 @@ class Cloud():
     def d(self,P,n):
         #ages=self.create_age_array()
         circle_c=self.circles[n]
+        #if ((circle_c.normal_vector[0]!=0) or (circle_c.normal_vector[1]!=1) or (circle_c.normal_vector[2]!=0)):
+        #    print(">WARNING THIS LINE SHOULD NEVER DISPLAY WARNING")
         P_1=P-((P[2]-circle_c.origin[2])*self.shear_magnitude*circle_c.return_age()*np.array(self.shear_direction))/1000
         dN=np.dot((P_1-circle_c.origin),circle_c.normal_vector)
         if (dN>=0):
             #P_2=(P_1-dN*circle_c.normal_vector)
             P_2=(P_1-circle_c.origin)-dN*np.array(circle_c.normal_vector)
             dR=np.sqrt(np.sum(np.square(P_2)))
+            #print("P_1: ", P_1)
+            #print("orig: ", circle_c.origin)
+            #print("P_2: ", P_2)
+            #print("dR: ", dR)
         else:
             dR=0
         return (dN,dR)
     
     # Given point P, this function determines which cell - if any - P is in
     # and calculates the number density of the appropriate cell.
-    def check_cell(self,P):
-        for n in range(len(self.circles)):
+    def check_cell(self,P,index,bin_distance):
+        for n in range(len(self.circles)-1):
+            #print("len(self.circles)=",len(self.circles))
             dN,dR=self.d(P,n)
+            if (dN<0):
+                #print(">Index(",index,"), circle[",n,"], dN",dN)
+                return 0
             dN_1,dR_1=self.d(P,(n+1))
             if (dN >= 0) and (dN_1 < 0):
                 # point P is in the cell between circles n and n+1
                 cell_current=self.circles[n]
                 c_r=cell_current.radius
                 density_1=(cell_current.stuff/(c_r*np.sqrt(2*np.pi)))*np.exp(-(1/2)*np.power((dR/c_r),2))
+                #print("P: ", P)
+                #print("dR",dR)
+                #print("stuff",cell_current.stuff)
+                #print("density",density_1)
+                #print("   >>>Index",index,"circle[",n,"]")
+                #print("      >> point",P)
+                #print("      >> dN",dN,"dN_1",dN_1,"dR",dR)
                 return density_1
-            else:
-                return 0
+        return 0
     
     def do_the_math(self):
         N=len(self.circles)
