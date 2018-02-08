@@ -123,17 +123,18 @@ class Lidar():
         bin_length=total_range/bins
         self.ax.set_xlim([0,(self.lidar_vmax)])
         self.ax.set_ylim([0,bins])
-        print('lidar_vmin,max: ', self.lidar_vmin, self.lidar_vmax)
         
         bin_centers=(np.mgrid[0:bins+1:1]-0.5)*bin_length
         bin_counts=[0]*(bins+1)
-        #self.plot.axvline(self.vmax,color=(0,1,0))
         if (self.vmin==None):
             self.vmin=0
         self.plot.axvline(self.vmin,color=(1,0,0))
         for queue_item in self.lidar_state_queue:
             output=queue_item.lidar_output
+            #print(output)
             for f_element in output:
+                if bin_length==0:
+                    bin_length=1
                 if (f_element<self.vmin):
                     element=0
                 elif (f_element>self.lidar_vmax):
@@ -141,15 +142,12 @@ class Lidar():
                 else:
                     element=f_element-self.vmin
                     element=math.floor(element/bin_length)
+                element=f_element-self.vmin
+                element=math.floor(element/bin_length)
                 #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
-        self.ax.plot(bin_centers,bin_counts)
         print(bin_counts)
-        #for i in range(len(bin_counts)-1, -1, -1):
-            #if bin_counts[i]>0:
-                #answer=i+(bin_length/2)
-                #if answer>=6:
-                    #self.vmax=answer
+        self.ax.plot(bin_centers,bin_counts)
         self.plot.pause(0.05)
 
     # This method provides values for the scalars of the lidar's line.
@@ -183,9 +181,6 @@ class Lidar():
                 if element > self.lidar_vmax:
                     self.lidar_vmax=element
                     self.vmax=element
-        #print("density_1[0]",density_1[0],"signal[0]",signal[0])
-        #print("SN[0]",SN[0],"output[0]",output[0])
-        #print(output)
         self.lidar_output=output
         return output
 
@@ -207,20 +202,6 @@ class Lidar():
         az_el=self.seq.evaluate(degrees_horizontal,degrees_vertical)
         self.lidar_scan_azimuth=az_el[0]
         self.lidar_scan_elevation=az_el[1]
-        #self.lidar_azimuth=azimuth
-        #self.lidar_elevation=elevation
-        #if (azimuth!=0):
-        #    self.lidar_azimuth=azimuth
-        #    self.lidar_elevation=elevation
-        #if (azimuth==0) and (self.seq==self.v_seq):
-        #    self.lidar_azimuth=0
-        #    self.lidar_elevation=elevation
-        #if (azimuth==0) and (self.seq==self.h_seq):
-        #    self.lidar_azimuth=azimuth
-        #    self.lidar_elevation=0
-        #else:
-        #    self.lidar_azimuth=azimuth
-        #    self.lidar_elevation=elevation
 
     # This method draws a line where the LIDAR instrument is pointing.
     def lidar_line(self,azimuth,elevation,position):
@@ -231,10 +212,6 @@ class Lidar():
         y = y1 + bin_dist*y2
         z = z1 + bin_dist*z2
         if not(self.off):
-            #print(x[0])
-            #print(y[0])
-            #print(z[0])
-            #print(bin_dist[0])
             t=self.lidar_retrieval(x,y,z,bin_dist)
         else:
             t=[0]*z
@@ -263,7 +240,6 @@ class Lidar():
                 old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=0
                 old_queue_item.lidar_line=old_line
-                #old_line.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Greys')
                 self.lidar_state_queue.put(old_queue_item)
             old_sphere=self.sphere_state_queue.get()
             old_sphere.set(x=x1,y=y1,z=z1,reset_zoom=False,color=(1,1,1))
