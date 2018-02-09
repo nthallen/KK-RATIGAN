@@ -162,6 +162,7 @@ if __name__ == "__main__":
     
     layout_2 = QtGui.QGridLayout()
     layout_display = QtGui.QGridLayout()
+    layout_display_azimuth = QtGui.QGridLayout()
     layout_4 = QtGui.QGridLayout()
     layout_5 = QtGui.QGridLayout()
     layout.addWidget(mayavi_widget,0,0)
@@ -251,6 +252,22 @@ if __name__ == "__main__":
     position1_display=QtGui.QLabel()
     position2_display=QtGui.QLabel()
     
+    # Create labels for the LIDAR azimuth
+    lidar_azimuth_display_a=QtGui.QLabel()
+    lidar_azimuth_display_cl=QtGui.QLabel()
+    lidar_azimuth_display_g=QtGui.QLabel()
+    lidar_azimuth_display_gl=QtGui.QLabel()
+    
+    lidar_azimuth_display_a.setText("0")
+    lidar_azimuth_display_cl.setText("0")
+    lidar_azimuth_display_g.setText("0")
+    lidar_azimuth_display_gl.setText("0")
+    
+    layout_display_azimuth.addWidget(lidar_azimuth_display_a,0,0)
+    layout_display_azimuth.addWidget(lidar_azimuth_display_cl,0,1)
+    layout_display_azimuth.addWidget(lidar_azimuth_display_g,0,2)
+    layout_display_azimuth.addWidget(lidar_azimuth_display_gl,0,3)
+    
     az1_display.setText("0")
     az2_display.setText("0")
     
@@ -293,6 +310,11 @@ if __name__ == "__main__":
     new_gondola.position1_label=position1_display
     new_gondola.position2_label=position2_display
     
+    new_gondola.lidar_azimuth_display_a=lidar_azimuth_display_a
+    new_gondola.lidar_azimuth_display_cl=lidar_azimuth_display_cl
+    new_gondola.lidar_azimuth_display_g=lidar_azimuth_display_g
+    new_gondola.lidar_azimuth_display_gl=lidar_azimuth_display_gl
+    
     #view_button=interactions.ViewButton("Distance", gondola)
     #view_button.connect_released()
     
@@ -301,10 +323,11 @@ if __name__ == "__main__":
     layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
     layout.addLayout(layout_display,5,0)
+    layout.addLayout(layout_display_azimuth,6,0)
     
     graph_button=interactions.LidarGraphButton("Graph LIDAR Data",new_gondola)
     graph_button.connect_released()
-    layout.addWidget(graph_button,6,0)
+    layout.addWidget(graph_button,7,0)
     
     #layout.addWidget(view_button,6,0)
     

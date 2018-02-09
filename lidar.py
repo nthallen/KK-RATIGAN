@@ -146,7 +146,7 @@ class Lidar():
                 element=math.floor(element/bin_length)
                 #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
-        print(bin_counts)
+        #print(bin_counts)
         self.ax.plot(bin_centers,bin_counts)
         self.plot.pause(0.05)
 

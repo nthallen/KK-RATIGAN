@@ -72,6 +72,11 @@ class Gondola():
     position1_label=None
     position2_label=None
     
+    lidar_azimuth_display_a=None
+    lidar_azimuth_display_cl=None
+    lidar_azimuth_display_g=None
+    lidar_azimuth_display_gl=None
+    
     shear_azimuth=None
     shear_magnitude=None
     
@@ -240,14 +245,30 @@ class Gondola():
         mlab.view(distance=self.view_distance,focalpoint=current_state.get_position())
         
         # Update the labels in the GUI
-        string_1="Last Commanded Azimuth: ("+str(self.get_azimuth())+")"
-        string_2="Last Recorded Azimuth: ("+str(current_state.get_azimuth())+")"
-        string_3="Last Commanded Position: "+str(self.trim_positions(self.get_position()))
-        string_4="Last Recorded Position: "+str(self.trim_positions(current_state.get_position()))
+        # "LC" means "last commanded" and "LR" means "last recorded"
+        # as in, LC is the most up to date information, and LR is what most
+        # recently took place on-screen
+        string_1="LC Gondola Azimuth: ("+str(self.get_azimuth())+")"
+        string_2="LR Gondola Azimuth: ("+str(current_state.get_azimuth())+")"
+        string_3="LC Gondola Position: "+str(self.trim_positions(self.get_position()))
+        string_4="LR Gondola Position: "+str(self.trim_positions(current_state.get_position()))
+        
         self.az1_label.setText(string_1)
         self.az2_label.setText(string_2)
         self.position1_label.setText(string_3)
         self.position2_label.setText(string_4)
+        
+        string_5="LC LIDAR Azimuth: ("+str(self.lidar.lidar_azimuth-self.get_azimuth())+")"
+        string_6="LR LIDAR Azimuth: ("+str(current_state.get_lidar_azimuth()-current_state.get_azimuth())+")"
+        string_7="LC LIDAR+Gondola Azimuth: ("+str(self.lidar.lidar_azimuth)+")"
+        string_8="LR LIDAR+Gondola Azimuth: ("+str(current_state.get_lidar_azimuth())+")"
+        
+        self.lidar_azimuth_display_a.setText(string_5)
+        self.lidar_azimuth_display_cl.setText(string_6)
+        self.lidar_azimuth_display_g.setText(string_7)
+        self.lidar_azimuth_display_gl.setText(string_8)
+        
+        # Update the graph, if applicable
         if (self.graph_on):
             self.lidar.graph_lidar_results()
     
