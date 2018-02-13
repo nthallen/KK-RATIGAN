@@ -121,6 +121,8 @@ class Lidar():
         total_range=self.lidar_vmax-self.lidar_vmin
         bins=30
         bin_length=total_range/bins
+        if bin_length==0:
+            bin_length=1
         self.ax.set_xlim([0,(self.lidar_vmax)])
         self.ax.set_ylim([0,bins])
         
@@ -131,19 +133,17 @@ class Lidar():
         self.plot.axvline(self.vmin,color=(1,0,0))
         for queue_item in self.lidar_state_queue:
             output=queue_item.lidar_output
-            #print(output)
+            #print("graph_lidar_results output",output)
             for f_element in output:
-                if bin_length==0:
-                    bin_length=1
                 if (f_element<self.vmin):
                     element=0
                 elif (f_element>self.lidar_vmax):
                     element=bins
                 else:
-                    element=f_element-self.vmin
-                    element=math.floor(element/bin_length)
-                element=f_element-self.vmin
-                element=math.floor(element/bin_length)
+                    #element=f_element-self.vmin
+                    element=math.floor(f_element/bin_length)
+                #element=f_element-self.vmin
+                #element=math.floor(element/bin_length)
                 #if (element < len(bin_counts)):
                 bin_counts[element]=bin_counts[element]+1
         #print(bin_counts)
@@ -181,7 +181,9 @@ class Lidar():
                 if element > self.lidar_vmax:
                     self.lidar_vmax=element
                     self.vmax=element
+        #print("self.lidar_vmax",self.lidar_vmax)
         self.lidar_output=output
+        #print("lidar_retrieval output",output)
         return output
 
     # This method calculates the direction in which the LIDAR should be facing.
@@ -216,7 +218,7 @@ class Lidar():
         else:
             t=[0]*z
         if (self.lidar_state_queue.qsize()<self.max_size):
-            if (self.off==False):
+            if not(self.off):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
                 new_queue_item=Lidar_Queue_Item(new_line,t)
                 self.lidar_state_queue.put(new_queue_item)
@@ -228,18 +230,20 @@ class Lidar():
             ms_sphere=new_sphere.mlab_source
             self.sphere_state_queue.put(ms_sphere)
         else:
-            if (self.off==False):
+            if not(self.off):
                 old_queue_item=self.lidar_state_queue.get()
                 old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=1
                 old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
                 old_queue_item.line=old_line
+                old_queue_item.lidar_output=t
                 self.lidar_state_queue.put(old_queue_item)
             else:
                 old_queue_item=self.lidar_state_queue.get()
                 old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=0
                 old_queue_item.lidar_line=old_line
+                old_queue_item.lidar_output=t
                 self.lidar_state_queue.put(old_queue_item)
             old_sphere=self.sphere_state_queue.get()
             old_sphere.set(x=x1,y=y1,z=z1,reset_zoom=False,color=(1,1,1))

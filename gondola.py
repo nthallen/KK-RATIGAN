@@ -50,6 +50,8 @@ class Gondola():
     # Defines the gondola's forward direction over the global coordinate system.
     direction_vector=None
     
+    output_file=None
+    
     view_distance=50
     iteration=0
     paused=False
@@ -111,6 +113,8 @@ class Gondola():
         self.distance_to_next_circle=10
         self.stuff_quantum=200
         self.circle_distance=10
+        self.output_file = open('gondola_output.txt', 'w')
+        self.output_file.write(">GONDOLA OUTPUT\n")
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -272,6 +276,11 @@ class Gondola():
         if (self.graph_on):
             self.lidar.graph_lidar_results()
     
+    # This method writes information on the cloud's "stuff" to the output file.
+    def print_relevant_information(self):
+        print_string = " >>STATE "+str(self.iteration)+":: current_circle.stuff: "+str(self.new_cloud.circles[0].stuff)+"\n"
+        self.output_file.write(print_string)
+    
     def update_camera(self):
         camera_view=mlab.view()
         camera_azimuth=camera_view[0]
@@ -334,6 +343,7 @@ class Gondola():
                 self.place_circle()
                 self.current_circle=self.new_cloud.current_circle
             self.create_mesh()
+            self.print_relevant_information()
             
             view=mlab.view()
             if view!=None:
