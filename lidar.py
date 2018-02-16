@@ -59,6 +59,8 @@ class Lidar():
     manual_max_override=False
     lidar_resolution=None
     new_cloud=None
+    range_has_changed=False
+    output_output_file=None
 
     # Initialization method.
     def __init__(self,maxsize,resolution):
@@ -75,11 +77,14 @@ class Lidar():
         self.seq=self.hv_seq
         self.off=True
         self.max_angle=23
-        self.vmin=1
-        self.vmax=1
-        self.lidar_vmin=1
-        self.lidar_vmax=1
+        self.vmin=0
+        self.vmax=2.5
+        self.lidar_vmin=0
+        self.lidar_vmax=2.5
         self.lidar_resolution=resolution
+        self.range_has_changed=False
+        self.output_output_file = open('output_output.txt', 'w')
+        self.output_output_file.write(">OUTPUT OUTPUT\n")
 
     # This method sets up the graph when its window is told to open.
     def handle_openings(self):
@@ -140,12 +145,12 @@ class Lidar():
                 elif (f_element>self.lidar_vmax):
                     element=bins
                 else:
-                    #element=f_element-self.vmin
+                    element=f_element-self.vmin
                     element=math.floor(f_element/bin_length)
-                #element=f_element-self.vmin
-                #element=math.floor(element/bin_length)
-                #if (element < len(bin_counts)):
-                bin_counts[element]=bin_counts[element]+1
+                element=f_element-self.vmin
+                element=math.floor(element/bin_length)
+                if (element < len(bin_counts)):
+                    bin_counts[element]=bin_counts[element]+1
         #print(bin_counts)
         self.ax.plot(bin_centers,bin_counts)
         self.plot.pause(0.05)
@@ -174,6 +179,10 @@ class Lidar():
             else:
                 SN[i] = 0
         output=SN*np.power(lidar_range,2)/(beta*self.lidar_resolution)
+        output_printing_string = ", "+str(output)
+        self.output_output_file.write(output_printing_string)
+        print_string = "   >>>LIDAR_OUTPUT[0]:"+str(output[0])+"\n"
+        self.new_cloud.cloud_output_file.write(print_string)
         if not(self.manual_max_override):
             for element in output:
                 if element < self.lidar_vmin:
@@ -181,6 +190,7 @@ class Lidar():
                 if element > self.lidar_vmax:
                     self.lidar_vmax=element
                     self.vmax=element
+                    self.range_has_changed=True
         #print("self.lidar_vmax",self.lidar_vmax)
         self.lidar_output=output
         #print("lidar_retrieval output",output)
@@ -217,13 +227,25 @@ class Lidar():
             t=self.lidar_retrieval(x,y,z,bin_dist)
         else:
             t=[0]*z
+        
+        #for i in range(95):
+        #    j=95-i
+        #    t[i]=j/50.0
+        
+        print_string = "   >>>vmin("+str(self.vmin)+"), vmax("+str(self.vmax)+")\n"
+        self.new_cloud.cloud_output_file.write(print_string)
+        #if (self.range_has_changed):
+        #    for element in self.lidar_state_queue:
+        #        old_line=element.lidar_line
+        #        old_line.mlab_source.set(vmin=self.vmin,vmax=self.lidar_vmax)
+        #    self.range_has_changed=False
         if (self.lidar_state_queue.qsize()<self.max_size):
             if not(self.off):
                 new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
                 new_queue_item=Lidar_Queue_Item(new_line,t)
                 self.lidar_state_queue.put(new_queue_item)
             else:
-                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',opacity=0)
+                new_line=mlab.plot3d(x,y,z,t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax,opacity=0)
                 new_queue_item=Lidar_Queue_Item(new_line,t)
                 self.lidar_state_queue.put(new_queue_item)
             new_sphere=mlab.points3d(x1,y1,z1,reset_zoom=False,color=(1,1,1))
@@ -234,7 +256,7 @@ class Lidar():
                 old_queue_item=self.lidar_state_queue.get()
                 old_line=old_queue_item.lidar_line
                 old_line.actor.property.opacity=1
-                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,tube_radius=1,reset_zoom=False,colormap='Reds',vmin=self.vmin,vmax=self.vmax)
+                old_line.mlab_source.set(x=x,y=y,z=z,scalars=t,reset_zoom=False,vmin=self.vmin,vmax=self.vmax)
                 old_queue_item.line=old_line
                 old_queue_item.lidar_output=t
                 self.lidar_state_queue.put(old_queue_item)

@@ -43,6 +43,7 @@ class Cloud():
     shear_direction=None
     ring=None
     visible=None
+    cloud_output_file=None
     
     # N is the number of circles, M is the number of points around the circle.
     def __init__(self,M,N,s_m,s_a,g):
@@ -65,6 +66,15 @@ class Cloud():
         self.ring=mlab.mesh(self.P_x,self.P_y,self.P_z,color=(1,1,1),opacity=1,reset_zoom=False)
         self.visible=True
         self.distance_to_next_circle=10
+        self.cloud_output_file = open('cloud_output.txt', 'w')
+        self.cloud_output_file.write(">CLOUD OUTPUT\n")
+    
+    # This method writes information on the cloud's "stuff" to the output file.
+    def print_relevant_information(self,bin_dist,circle_no,c_r,d1,dR,stuff,density):
+        print_string = " >>STATE "+str(self.gondola.iteration)+"::\n"
+        self.cloud_output_file.write(print_string)
+        print_string_cloud = "   >>>bin_dist("+str(bin_dist)+"), circle#("+str(circle_no)+"), c_r("+str(c_r)+"), d1("+str(d1)+"), dR("+str(dR)+"), stuff("+str(stuff)+"), density("+str(density)+")\n"
+        self.cloud_output_file.write(print_string_cloud)
     
     def age(self):
         scale_factor=0.1
@@ -126,6 +136,9 @@ class Cloud():
                 cell_current=self.circles[n]
                 c_r=cell_current.radius
                 density_1=(cell_current.stuff/(c_r*np.sqrt(2*np.pi)))*np.exp(-(1/2)*np.power((dR/c_r),2))
+                
+                if (bin_distance==100):
+                    self.print_relevant_information(bin_distance, n, c_r, dN_1, dR, self.circles[n].stuff, density_1)
                 #print("P: ", P)
                 #print("dR",dR)
                 #print("stuff",cell_current.stuff)

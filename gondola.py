@@ -138,8 +138,8 @@ class Gondola():
             
             d1=distance
             d2=self.distance_to_next_circle
-            cell_prev.stuff+=self.stuff_quantum*(d1/(d1+d2))
-            cell_current.stuff+=self.stuff_quantum*(d2/(d1+d2))
+            cell_prev.stuff+=self.stuff_quantum*(d2/(d1+d2))
+            cell_current.stuff+=self.stuff_quantum*(d1/(d1+d2))
             
             self.distance_to_next_circle=self.circle_distance-distance
         else:
@@ -278,8 +278,11 @@ class Gondola():
     
     # This method writes information on the cloud's "stuff" to the output file.
     def print_relevant_information(self):
-        print_string = " >>STATE "+str(self.iteration)+":: current_circle.stuff: "+str(self.new_cloud.circles[0].stuff)+"\n"
+        print_string = " >>STATE "+str(self.iteration)+"::\n"
         self.output_file.write(print_string)
+        for i in range(len(self.new_cloud.circles)):
+            print_string_cloud = "   >>>circle["+str(i)+"].stuff="+str(self.new_cloud.circles[i].stuff)+"\n"
+            self.output_file.write(print_string_cloud)
     
     def update_camera(self):
         camera_view=mlab.view()
