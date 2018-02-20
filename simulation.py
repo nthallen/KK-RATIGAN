@@ -118,6 +118,10 @@ class MayaviQWidget(QtGui.QWidget):
         layout.addWidget(self.ui)
         self.ui.setParent(self)
 
+class MyPopUp(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+
 # Main method
 if __name__ == "__main__":
     # THE IMPORTANT VARIABLES
@@ -252,22 +256,6 @@ if __name__ == "__main__":
     position1_display=QtGui.QLabel()
     position2_display=QtGui.QLabel()
     
-    # Create labels for the LIDAR azimuth
-    lidar_azimuth_display_a=QtGui.QLabel()
-    lidar_azimuth_display_cl=QtGui.QLabel()
-    lidar_azimuth_display_g=QtGui.QLabel()
-    lidar_azimuth_display_gl=QtGui.QLabel()
-    
-    lidar_azimuth_display_a.setText("0")
-    lidar_azimuth_display_cl.setText("0")
-    lidar_azimuth_display_g.setText("0")
-    lidar_azimuth_display_gl.setText("0")
-    
-    layout_display_azimuth.addWidget(lidar_azimuth_display_a,0,0)
-    layout_display_azimuth.addWidget(lidar_azimuth_display_cl,0,1)
-    layout_display_azimuth.addWidget(lidar_azimuth_display_g,0,2)
-    layout_display_azimuth.addWidget(lidar_azimuth_display_gl,0,3)
-    
     az1_display.setText("0")
     az2_display.setText("0")
     
@@ -292,11 +280,6 @@ if __name__ == "__main__":
     speed_slider.speed_label=display_speed
     angle_slider.angle_label=display_angle
     
-    layout_display.addWidget(az1_display,0,0)
-    layout_display.addWidget(az2_display,0,1)
-    layout_display.addWidget(position1_display,0,2)
-    layout_display.addWidget(position2_display,0,3)
-    
     layout_4.addWidget(display_speed,0,0)
     layout_4.addLayout(layout_speed_slider,0,1)
     layout_4.addWidget(display_angle,0,2)
@@ -305,15 +288,6 @@ if __name__ == "__main__":
     layout_5.addWidget(pause_button,0,0)
     layout_5.addWidget(cloud_button,0,1)
     layout_5.addWidget(cloud_spray_button,0,2)
-    new_gondola.az1_label=az1_display
-    new_gondola.az2_label=az2_display
-    new_gondola.position1_label=position1_display
-    new_gondola.position2_label=position2_display
-    
-    new_gondola.lidar_azimuth_display_a=lidar_azimuth_display_a
-    new_gondola.lidar_azimuth_display_cl=lidar_azimuth_display_cl
-    new_gondola.lidar_azimuth_display_g=lidar_azimuth_display_g
-    new_gondola.lidar_azimuth_display_gl=lidar_azimuth_display_gl
     
     #view_button=interactions.ViewButton("Distance", gondola)
     #view_button.connect_released()
@@ -322,12 +296,10 @@ if __name__ == "__main__":
     layout.addLayout(layout_4,2,0)
     layout.addLayout(layout_5,3,0)
     layout.addWidget(combo_box,4,0)
-    layout.addLayout(layout_display,5,0)
-    layout.addLayout(layout_display_azimuth,6,0)
     
     graph_button=interactions.LidarGraphButton("Graph LIDAR Data",new_gondola)
     graph_button.connect_released()
-    layout.addWidget(graph_button,7,0)
+    layout.addWidget(graph_button,5,0)
     
     #layout.addWidget(view_button,6,0)
     

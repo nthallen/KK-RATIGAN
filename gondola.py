@@ -1,5 +1,7 @@
 # Miles E. Allen, 12 October 2017
 
+from pyface.qt import QtGui, QtCore
+
 import math
 import queue
 import states
@@ -69,22 +71,24 @@ class Gondola():
     nozzle_position=None
     gondola_length=None
     
-    az1_label=None
-    az2_label=None
-    position1_label=None
-    position2_label=None
-    
-    lidar_azimuth_display_a=None
-    lidar_azimuth_display_cl=None
-    lidar_azimuth_display_g=None
-    lidar_azimuth_display_gl=None
-    
     shear_azimuth=None
     shear_magnitude=None
     
     distance_to_next_circle=None
     stuff_quantum=None
     circle_distance=None
+    
+    popup_window=None
+    popup_window_open=None
+    
+    lr_gondola_azimuth=None
+    lc_gondola_azimuth=None
+    lr_lidar_azimuth=None
+    lc_lidar_azimuth=None
+    lr_gondola_lidar_azimuth=None
+    lc_gondola_lidar_azimuth=None
+    lr_gondola_position=None
+    lc_gondola_position=None
     
     def __init__(self,position,wait,c_l,max_size,r_s,res,s_a,s_m):
         self.direction_vector=[0,1,0]
@@ -115,6 +119,122 @@ class Gondola():
         self.circle_distance=10
         self.output_file = open('gondola_output.txt', 'w')
         self.output_file.write(">GONDOLA OUTPUT\n")
+        self.create_popup()
+
+    def create_popup(self):
+        # The goal is to create three columns; Label, number, and corresponding unit
+        self.popup_window=simulation.MyPopUp()
+        self.popup_window_open=False
+        self.popup_window.setWindowTitle("Gondola Flight Data")
+        layout = QtGui.QGridLayout(self.popup_window)
+        
+        label_lr_gondola_azimuth=QtGui.QLabel()
+        label_lr_gondola_azimuth.setText("LR Gondola Azimuth")
+        self.lr_gondola_azimuth=QtGui.QLabel()
+        self.lr_gondola_azimuth.setText("0")
+        lr_gondola_azimuth_units=QtGui.QLabel()
+        lr_gondola_azimuth_units.setText("Degrees")
+        
+        label_lc_gondola_azimuth=QtGui.QLabel()
+        label_lc_gondola_azimuth.setText("LC Gondola Azimuth")
+        self.lc_gondola_azimuth=QtGui.QLabel()
+        self.lc_gondola_azimuth.setText("0")
+        lc_gondola_azimuth_units=QtGui.QLabel()
+        lc_gondola_azimuth_units.setText("Degrees")
+        
+        label_lr_lidar_azimuth=QtGui.QLabel()
+        label_lr_lidar_azimuth.setText("LR LIDAR Azimuth")
+        self.lr_lidar_azimuth=QtGui.QLabel()
+        self.lr_lidar_azimuth.setText("0")
+        lr_lidar_azimuth_units=QtGui.QLabel()
+        lr_lidar_azimuth_units.setText("Degrees")
+        
+        label_lc_lidar_azimuth=QtGui.QLabel()
+        label_lc_lidar_azimuth.setText("LC LIDAR Azimuth")
+        self.lc_lidar_azimuth=QtGui.QLabel()
+        self.lc_lidar_azimuth.setText("0")
+        lc_lidar_azimuth_units=QtGui.QLabel()
+        lc_lidar_azimuth_units.setText("Degrees")
+        
+        label_lr_gondola_lidar_azimuth=QtGui.QLabel()
+        label_lr_gondola_lidar_azimuth.setText("LR Gondola + LIDAR Azimuth")
+        self.lr_gondola_lidar_azimuth=QtGui.QLabel()
+        self.lr_gondola_lidar_azimuth.setText("0")
+        lr_gondola_lidar_azimuth_units=QtGui.QLabel()
+        lr_gondola_lidar_azimuth_units.setText("Degrees")
+        
+        label_lc_gondola_lidar_azimuth=QtGui.QLabel()
+        label_lc_gondola_lidar_azimuth.setText("LC Gondola + LIDAR Azimuth")
+        self.lc_gondola_lidar_azimuth=QtGui.QLabel()
+        self.lc_gondola_lidar_azimuth.setText("0")
+        lc_gondola_lidar_azimuth_units=QtGui.QLabel()
+        lc_gondola_lidar_azimuth_units.setText("Degrees")
+        
+        label_lr_gondola_position=QtGui.QLabel()
+        label_lr_gondola_position.setText("LR Gondola Position")
+        self.lr_gondola_position=QtGui.QLabel()
+        self.lr_gondola_position.setText("(0,0,0)")
+        lr_gondola_position_units=QtGui.QLabel()
+        lr_gondola_position_units.setText("Meters")
+        
+        label_lc_gondola_position=QtGui.QLabel()
+        label_lc_gondola_position.setText("LC Gondola Position")
+        self.lc_gondola_position=QtGui.QLabel()
+        self.lc_gondola_position.setText("(0,0,0)")
+        lc_gondola_position_units=QtGui.QLabel()
+        lc_gondola_position_units.setText("Meters")
+        
+        label_placeholder_value=QtGui.QLabel()
+        label_placeholder_value.setText("0")
+        label_placeholder_position=QtGui.QLabel()
+        label_placeholder_position.setText("(0,0,0)")
+        
+        layout.addWidget(label_lc_gondola_azimuth,0,0)
+        layout.addWidget(self.lc_gondola_azimuth,0,1)
+        layout.addWidget(lc_gondola_azimuth_units,0,2)
+        
+        layout.addWidget(label_lr_gondola_azimuth,1,0)
+        layout.addWidget(self.lr_gondola_azimuth,1,1)
+        layout.addWidget(lr_gondola_azimuth_units,1,2)
+        
+        layout.addWidget(label_lc_lidar_azimuth,2,0)
+        layout.addWidget(self.lc_lidar_azimuth,2,1)
+        layout.addWidget(lc_lidar_azimuth_units,2,2)
+        
+        layout.addWidget(label_lr_lidar_azimuth,3,0)
+        layout.addWidget(self.lr_lidar_azimuth,3,1)
+        layout.addWidget(lr_lidar_azimuth_units,3,2)
+        
+        layout.addWidget(label_lc_gondola_lidar_azimuth,4,0)
+        layout.addWidget(self.lc_gondola_lidar_azimuth,4,1)
+        layout.addWidget(lc_gondola_lidar_azimuth_units,4,2)
+        
+        layout.addWidget(label_lr_gondola_lidar_azimuth,5,0)
+        layout.addWidget(self.lr_gondola_lidar_azimuth,5,1)
+        layout.addWidget(lr_gondola_lidar_azimuth_units,5,2)
+        
+        layout.addWidget(label_lc_gondola_position,6,0)
+        layout.addWidget(self.lc_gondola_position,6,1)
+        layout.addWidget(lc_gondola_position_units,6,2)
+        
+        layout.addWidget(label_lr_gondola_position,7,0)
+        layout.addWidget(self.lr_gondola_position,7,1)
+        layout.addWidget(lr_gondola_position_units,7,2)
+        
+        #######################################################################
+        
+        self.popup_window.show()
+    
+    # This method updates all of the necessary values in the display window.
+    def update_popup_window(self,current_state):
+        self.lc_gondola_azimuth.setText(str(self.get_azimuth()))
+        self.lr_gondola_azimuth.setText(str(current_state.get_azimuth()))
+        self.lc_lidar_azimuth.setText(str(self.lidar.lidar_azimuth-self.get_azimuth()))
+        self.lr_lidar_azimuth.setText(str(current_state.get_lidar_azimuth()-current_state.get_azimuth()))
+        self.lc_gondola_lidar_azimuth.setText(str(self.lidar.lidar_azimuth))
+        self.lr_gondola_lidar_azimuth.setText(str(current_state.get_lidar_azimuth()))
+        self.lc_gondola_position.setText(str(self.trim_positions(self.get_position())))
+        self.lr_gondola_position.setText(str(self.trim_positions(current_state.get_position())))
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -252,25 +372,8 @@ class Gondola():
         # "LC" means "last commanded" and "LR" means "last recorded"
         # as in, LC is the most up to date information, and LR is what most
         # recently took place on-screen
-        string_1="LC Gondola Azimuth: ("+str(self.get_azimuth())+")"
-        string_2="LR Gondola Azimuth: ("+str(current_state.get_azimuth())+")"
-        string_3="LC Gondola Position: "+str(self.trim_positions(self.get_position()))
-        string_4="LR Gondola Position: "+str(self.trim_positions(current_state.get_position()))
         
-        self.az1_label.setText(string_1)
-        self.az2_label.setText(string_2)
-        self.position1_label.setText(string_3)
-        self.position2_label.setText(string_4)
-        
-        string_5="LC LIDAR Azimuth: ("+str(self.lidar.lidar_azimuth-self.get_azimuth())+")"
-        string_6="LR LIDAR Azimuth: ("+str(current_state.get_lidar_azimuth()-current_state.get_azimuth())+")"
-        string_7="LC LIDAR+Gondola Azimuth: ("+str(self.lidar.lidar_azimuth)+")"
-        string_8="LR LIDAR+Gondola Azimuth: ("+str(current_state.get_lidar_azimuth())+")"
-        
-        self.lidar_azimuth_display_a.setText(string_5)
-        self.lidar_azimuth_display_cl.setText(string_6)
-        self.lidar_azimuth_display_g.setText(string_7)
-        self.lidar_azimuth_display_gl.setText(string_8)
+        self.update_popup_window(current_state)
         
         # Update the graph, if applicable
         if (self.graph_on):
