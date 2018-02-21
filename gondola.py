@@ -1,6 +1,6 @@
 # Miles E. Allen, 12 October 2017
 
-from pyface.qt import QtGui, QtCore
+from pyface.qt import QtGui
 
 import math
 import queue
@@ -119,13 +119,153 @@ class Gondola():
         self.circle_distance=10
         self.output_file = open('gondola_output.txt', 'w')
         self.output_file.write(">GONDOLA OUTPUT\n")
-        self.create_popup()
+        self.create_popup_horizontal()
+
+    def create_popup_horizontal(self):
+        self.popup_window=simulation.MyPopUp()
+        self.popup_window_open=False
+        self.popup_window.setWindowTitle("Gondola Flight Data")
+        layout = QtGui.QGridLayout(self.popup_window)
+        
+        text_font=QtGui.QFont("Courier New",12)
+        text_font.setBold(True)
+        number_font=QtGui.QFont("Courier New",12)
+        
+        label_labels_1=QtGui.QLabel()
+        label_labels_1.setText("")
+        label_labels_lc=QtGui.QLabel()
+        label_labels_lc.setText("LC")
+        label_labels_lc.setToolTip("Last Commanded")
+        label_labels_lc.setFont(text_font)
+        label_labels_lr=QtGui.QLabel()
+        label_labels_lr.setText("LR")
+        label_labels_lr.setToolTip("Last Recorded")
+        label_labels_lr.setFont(text_font)
+        
+        label_lr_gondola_azimuth=QtGui.QLabel()
+        label_lr_gondola_azimuth.setText("GA")
+        label_lr_gondola_azimuth.setToolTip("Gondola Azimuth")
+        label_lr_gondola_azimuth.setFont(text_font)
+        self.lr_gondola_azimuth=QtGui.QLabel()
+        self.lr_gondola_azimuth.setText("0")
+        self.lr_gondola_azimuth.setFont(number_font)
+        self.lr_gondola_azimuth.setStyleSheet("color: green")
+        lr_gondola_azimuth_units=QtGui.QLabel()
+        lr_gondola_azimuth_units.setText("D")
+        lr_gondola_azimuth_units.setToolTip("Degrees")
+        lr_gondola_azimuth_units.setFont(text_font)
+        
+        label_lc_gondola_azimuth=QtGui.QLabel()
+        label_lc_gondola_azimuth.setText("LC Gondola Azimuth")
+        self.lc_gondola_azimuth=QtGui.QLabel()
+        self.lc_gondola_azimuth.setText("0")
+        self.lc_gondola_azimuth.setFont(number_font)
+        self.lc_gondola_azimuth.setStyleSheet("color: green")
+        lc_gondola_azimuth_units=QtGui.QLabel()
+        lc_gondola_azimuth_units.setText("D")
+        
+        label_lr_lidar_azimuth=QtGui.QLabel()
+        label_lr_lidar_azimuth.setText("LA")
+        label_lr_lidar_azimuth.setToolTip("LIDAR Azimuth")
+        label_lr_lidar_azimuth.setFont(text_font)
+        self.lr_lidar_azimuth=QtGui.QLabel()
+        self.lr_lidar_azimuth.setText("0")
+        self.lr_lidar_azimuth.setFont(number_font)
+        self.lr_lidar_azimuth.setStyleSheet("color: green")
+        lr_lidar_azimuth_units=QtGui.QLabel()
+        lr_lidar_azimuth_units.setText("D")
+        lr_lidar_azimuth_units.setToolTip("Degrees")
+        lr_lidar_azimuth_units.setFont(text_font)
+        
+        label_lc_lidar_azimuth=QtGui.QLabel()
+        label_lc_lidar_azimuth.setText("LC LIDAR Azimuth")
+        self.lc_lidar_azimuth=QtGui.QLabel()
+        self.lc_lidar_azimuth.setText("0")
+        self.lc_lidar_azimuth.setFont(number_font)
+        self.lc_lidar_azimuth.setStyleSheet("color: green")
+        lc_lidar_azimuth_units=QtGui.QLabel()
+        lc_lidar_azimuth_units.setText("D")
+        
+        label_lr_gondola_lidar_azimuth=QtGui.QLabel()
+        label_lr_gondola_lidar_azimuth.setText("G+LA")
+        label_lr_gondola_lidar_azimuth.setToolTip("Gondola + LIDAR Azimuth")
+        label_lr_gondola_lidar_azimuth.setFont(text_font)
+        self.lr_gondola_lidar_azimuth=QtGui.QLabel()
+        self.lr_gondola_lidar_azimuth.setText("0")
+        self.lr_gondola_lidar_azimuth.setFont(number_font)
+        self.lr_gondola_lidar_azimuth.setStyleSheet("color: green")
+        lr_gondola_lidar_azimuth_units=QtGui.QLabel()
+        lr_gondola_lidar_azimuth_units.setText("D")
+        lr_gondola_lidar_azimuth_units.setToolTip("Degrees")
+        lr_gondola_lidar_azimuth_units.setFont(text_font)
+        
+        label_lc_gondola_lidar_azimuth=QtGui.QLabel()
+        label_lc_gondola_lidar_azimuth.setText("LC Gondola + LIDAR Azimuth")
+        self.lc_gondola_lidar_azimuth=QtGui.QLabel()
+        self.lc_gondola_lidar_azimuth.setText("0")
+        self.lc_gondola_lidar_azimuth.setFont(number_font)
+        self.lc_gondola_lidar_azimuth.setStyleSheet("color: green")
+        lc_gondola_lidar_azimuth_units=QtGui.QLabel()
+        lc_gondola_lidar_azimuth_units.setText("D")
+        
+        label_lr_gondola_position=QtGui.QLabel()
+        label_lr_gondola_position.setText("Gondola Position")
+        label_lr_gondola_position.setFont(text_font)
+        self.lr_gondola_position=QtGui.QLabel()
+        self.lr_gondola_position.setText("(0,0,0)")
+        self.lr_gondola_position.setFont(number_font)
+        self.lr_gondola_position.setStyleSheet("color: green")
+        lr_gondola_position_units=QtGui.QLabel()
+        lr_gondola_position_units.setText("M")
+        lr_gondola_position_units.setToolTip("Meters")
+        lr_gondola_position_units.setFont(text_font)
+        
+        label_lc_gondola_position=QtGui.QLabel()
+        label_lc_gondola_position.setText("LC Gondola Position")
+        self.lc_gondola_position=QtGui.QLabel()
+        self.lc_gondola_position.setText("(0,0,0)")
+        self.lc_gondola_position.setFont(number_font)
+        self.lc_gondola_position.setStyleSheet("color: green")
+        lc_gondola_position_units=QtGui.QLabel()
+        lc_gondola_position_units.setText("M")
+        
+        layout.addWidget(label_labels_1,0,0)
+        layout.addWidget(label_labels_lr,1,0)
+        layout.addWidget(label_labels_lc,2,0)
+        
+        layout.addWidget(label_lr_gondola_azimuth,0,1)
+        layout.addWidget(self.lr_gondola_azimuth,1,1)
+        layout.addWidget(self.lc_gondola_azimuth,2,1)
+        layout.addWidget(lr_gondola_azimuth_units,3,1)
+
+        layout.addWidget(label_lr_lidar_azimuth,0,2)
+        layout.addWidget(self.lr_lidar_azimuth,1,2)
+        layout.addWidget(self.lc_lidar_azimuth,2,2)
+        layout.addWidget(lr_lidar_azimuth_units,3,2)
+        
+        layout.addWidget(label_lr_gondola_lidar_azimuth,0,3)
+        layout.addWidget(self.lr_gondola_lidar_azimuth,1,3)
+        layout.addWidget(self.lc_gondola_lidar_azimuth,2,3)
+        layout.addWidget(lr_gondola_lidar_azimuth_units,3,3)
+        
+        layout.addWidget(label_lr_gondola_position,0,4)
+        layout.addWidget(self.lr_gondola_position,1,4)
+        layout.addWidget(self.lc_gondola_position,2,4)
+        layout.addWidget(lr_gondola_position_units,3,4)
+        
+        #######################################################################
+        self.popup_window.show()
 
     def create_popup(self):
         # The goal is to create three columns; Label, number, and corresponding unit
         self.popup_window=simulation.MyPopUp()
         self.popup_window_open=False
         self.popup_window.setWindowTitle("Gondola Flight Data")
+        self.popup_window.setStyleSheet("""
+        .QWidget {
+            font-family: "Courier New", Times, monospace;
+            }
+        """)
         layout = QtGui.QGridLayout(self.popup_window)
         
         label_lr_gondola_azimuth=QtGui.QLabel()
@@ -184,11 +324,6 @@ class Gondola():
         lc_gondola_position_units=QtGui.QLabel()
         lc_gondola_position_units.setText("Meters")
         
-        label_placeholder_value=QtGui.QLabel()
-        label_placeholder_value.setText("0")
-        label_placeholder_position=QtGui.QLabel()
-        label_placeholder_position.setText("(0,0,0)")
-        
         layout.addWidget(label_lc_gondola_azimuth,0,0)
         layout.addWidget(self.lc_gondola_azimuth,0,1)
         layout.addWidget(lc_gondola_azimuth_units,0,2)
@@ -222,19 +357,22 @@ class Gondola():
         layout.addWidget(lr_gondola_position_units,7,2)
         
         #######################################################################
-        
         self.popup_window.show()
     
     # This method updates all of the necessary values in the display window.
     def update_popup_window(self,current_state):
-        self.lc_gondola_azimuth.setText(str(self.get_azimuth()))
-        self.lr_gondola_azimuth.setText(str(current_state.get_azimuth()))
-        self.lc_lidar_azimuth.setText(str(self.lidar.lidar_azimuth-self.get_azimuth()))
-        self.lr_lidar_azimuth.setText(str(current_state.get_lidar_azimuth()-current_state.get_azimuth()))
-        self.lc_gondola_lidar_azimuth.setText(str(self.lidar.lidar_azimuth))
-        self.lr_gondola_lidar_azimuth.setText(str(current_state.get_lidar_azimuth()))
-        self.lc_gondola_position.setText(str(self.trim_positions(self.get_position())))
-        self.lr_gondola_position.setText(str(self.trim_positions(current_state.get_position())))
+        self.lc_gondola_azimuth.setText(str('{:4d}'.format(self.get_azimuth())))
+        self.lr_gondola_azimuth.setText(str('{:4d}'.format(current_state.get_azimuth())))
+        self.lc_lidar_azimuth.setText(str('{:4d}'.format(self.lidar.lidar_azimuth-self.get_azimuth())))
+        self.lr_lidar_azimuth.setText(str('{:4d}'.format(current_state.get_lidar_azimuth()-current_state.get_azimuth())))
+        self.lc_gondola_lidar_azimuth.setText(str('{:4d}'.format(self.lidar.lidar_azimuth)))
+        self.lr_gondola_lidar_azimuth.setText(str('{:4d}'.format(current_state.get_lidar_azimuth())))
+        
+        x1,y1,z1=self.get_position()
+        x2,y2,z2=current_state.get_position()
+        
+        self.lc_gondola_position.setText(str("("+'{:06.1f},{:06.1f},{:06.1f}'.format(x1,y1,z1))+")")
+        self.lr_gondola_position.setText(str("("+'{:06.1f},{:06.1f},{:06.1f}'.format(x2,y2,z2))+")")
 
     # This method creates the mesh of the cloud.
     def create_mesh(self):
@@ -440,7 +578,7 @@ class Gondola():
             
             if not(self.lidar.off):
                 self.lidar.scan()
-            print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
+            #print(" >> STATE",self.iteration,"   ::",self.trim_positions(self.get_position()))
             #print(" >>STATE",self.iteration,":: ",end='')
             
             # New code added as of 18 Jan 2018
